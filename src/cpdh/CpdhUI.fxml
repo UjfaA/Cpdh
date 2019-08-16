@@ -1,7 +1,114 @@
 <?xml version="1.0" encoding="UTF-8"?>
-	
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
-	
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="cpdh.CpdhController">
-	<!-- TODO Add Nodes -->
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane fx:id="borderPane" focusTraversable="true" maxHeight="800.0" maxWidth="800.0" minHeight="400.0" minWidth="200.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cpdh.CpdhController">
+   <top>
+      <MenuBar fx:id="menuBar" BorderPane.alignment="TOP_LEFT">
+        <menus>
+          <Menu mnemonicParsing="false" text="Meni">
+            <items>
+                  <MenuItem fx:id="loadImageItem" mnemonicParsing="false" text="Učitaj sliku" />
+                  <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Sačuvaj slike" />
+                  <MenuItem fx:id="loadDBItem" mnemonicParsing="false" text="Učitaj set podataka" />
+                  <MenuItem mnemonicParsing="false" text="Odredi sadržaj" />
+                  <MenuItem mnemonicParsing="false" text="Konstruiši set podataka" />
+              <MenuItem fx:id="exitItem" mnemonicParsing="false" text="Izlaz" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Pomoć">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+   </top>
+   <center>
+      <VBox fx:id="vBoxCenter" alignment="CENTER" spacing="5.0" BorderPane.alignment="TOP_CENTER">
+         <children>
+            <ImageView fx:id="imageView" fitHeight="475.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true">
+               <VBox.margin>
+                  <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+               </VBox.margin></ImageView>
+            <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" hgap="15.0" vgap="5.0">
+               <children>
+                  <Label text="Prikaži: " />
+                  <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" text="Originalnu">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="toggleGroup" />
+                     </toggleGroup></RadioButton>
+                  <RadioButton fx:id="rBtnBinary" mnemonicParsing="false" text="Binarnu" toggleGroup="$toggleGroup" />
+                  <RadioButton fx:id="rBtnContour" mnemonicParsing="false" text="Konturu" toggleGroup="$toggleGroup" />
+                  <RadioButton fx:id="rBtnPoints" mnemonicParsing="false" text="Tačke" toggleGroup="$toggleGroup" />
+                  <RadioButton fx:id="rBtnCircle" mnemonicParsing="false" text="Kružnicu" toggleGroup="$toggleGroup" />
+                  <RadioButton fx:id="rBtnRegions" mnemonicParsing="false" text="Regione" toggleGroup="$toggleGroup" />
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </FlowPane>
+            <TextField fx:id="textField" alignment="CENTER" editable="false" focusTraversable="false">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="25.0" right="25.0" top="15.0" />
+               </VBox.margin>
+               <font>
+                  <Font name="Monospaced Bold" size="12.0" />
+               </font></TextField>
+            <TextArea fx:id="textArea" editable="false" focusTraversable="false" prefColumnCount="8" prefRowCount="3">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+               <font>
+                  <Font name="Monospaced Bold" size="14.0" />
+               </font>
+            </TextArea>
+            <HBox alignment="BOTTOM_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="50.0" spacing="10.0">
+               <children>
+                  <Button fx:id="btnAutoCompare" mnemonicParsing="false" text="Automatsko poređenje" />
+                  <Button fx:id="btnLoad" minWidth="-Infinity" mnemonicParsing="false" text="Učitaj sliku" textAlignment="CENTER" />
+                  <Button fx:id="btnCompare" minWidth="-Infinity" mnemonicParsing="false" text="Odredi sadržaj" />
+               </children>
+               <padding>
+                  <Insets right="15.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="BOTTOM_LEFT" prefHeight="18.0" spacing="10.0">
+               <children>
+                  <Label fx:id="label" minWidth="40.0" prefHeight="20.0" prefWidth="300.0">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets left="3.0" />
+                     </HBox.margin>
+                  </Label>
+                  <ProgressBar fx:id="progresBar" disable="true" prefWidth="150.0" progress="0.0" visible="false" />
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+            </HBox>
+         </children>
+      </VBox>
+   </center>
+   <padding>
+      <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+   </padding>
 </BorderPane>
