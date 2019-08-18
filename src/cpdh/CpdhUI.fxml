@@ -24,7 +24,7 @@
         <menus>
           <Menu mnemonicParsing="false" text="Meni">
             <items>
-                  <MenuItem fx:id="loadImageItem" mnemonicParsing="false" text="Učitaj sliku" />
+                  <MenuItem fx:id="loadImageItem" mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load Image" />
                   <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Sačuvaj slike" />
                   <MenuItem fx:id="loadDBItem" mnemonicParsing="false" text="Učitaj set podataka" />
                   <MenuItem mnemonicParsing="false" text="Odredi sadržaj" />
