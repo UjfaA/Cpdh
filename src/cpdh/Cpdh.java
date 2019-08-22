@@ -24,33 +24,32 @@ import javafx.scene.image.Image;
 
 public class Cpdh {
 	
-	static int NUM_OF_POINTS = 250;
-	
+//	private final int numOfPoints;
 	private final int[] histogram;
 	private final Mat signature;
 	private final List<Image> images;
 
 
-	public Cpdh(File file) {
+	public Cpdh(File file, int numOfPoints) {
 
-		this(file, true);
+		this(file, numOfPoints, true);
 	}
 
-	public Cpdh(File file, boolean saveImages) {
+	public Cpdh(File file, int numOfPoints, boolean saveImages) {
 		
-		ResultsContainer result = processFile(file, saveImages);
+		ResultsContainer result = processFile(file, numOfPoints, saveImages);
 		this.histogram = result.histogram;
 		this.signature = toSignature(result.histogram);
 		this.images = result.getImages();
 	}
 
-	private ResultsContainer processFile(File file, boolean saveImages) {
+	private ResultsContainer processFile(File file, int numOfPoints, boolean saveImages) {
 
 		Mat matSrc = Imgcodecs.imread(file.getAbsolutePath());
 
 		if ( !matSrc.empty()) {
 
-			ResultsContainer result = processImage(matSrc, saveImages);
+			ResultsContainer result = processImage(matSrc, numOfPoints, saveImages);
 			calculateCpdh(result);
 
 			return result;
@@ -59,7 +58,7 @@ public class Cpdh {
 			throw new IllegalArgumentException("Unable to read file: " + file.getName());
 	}
 
-	private ResultsContainer processImage(Mat matSrc, boolean saveImages) {
+	private ResultsContainer processImage(Mat matSrc, int numOfPoints, boolean saveImages) {
 		
 		/* Loaded image -> Grayscale -> Binary -> Sampling (-> Circle -> Regions)*/
 
@@ -88,7 +87,7 @@ public class Cpdh {
 		
 		/* sampling */
 
-		Point [] sampledPoints = sampling (contours, NUM_OF_POINTS);
+		Point [] sampledPoints = sampling (contours, numOfPoints);
 
 		/* calculate minimal enclosing circle */
 
@@ -401,7 +400,18 @@ public class Cpdh {
 		}
 	}
 
-	public List<Image> getImages() {
+	List<Image> getImages() {
 		return images;
-	}	
+	}
+
+	String toString1Line() {
+		
+		StringBuilder output = new StringBuilder(75);
+		for(int bin : histogram) {
+			output.append(bin).append(' ');
+		}
+		return output.toString();
+	}
+
+
 }

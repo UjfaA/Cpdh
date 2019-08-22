@@ -8,6 +8,7 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.RadioMenuItem?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleGroup?>
@@ -24,15 +25,26 @@
         <menus>
           <Menu mnemonicParsing="false" text="Meni">
             <items>
-                  <MenuItem fx:id="loadImageItem" mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load Image" />
+                  <MenuItem fx:id="loadImageItem" mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load image" />
                   <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Sačuvaj slike" />
                   <MenuItem fx:id="loadDBItem" mnemonicParsing="false" text="Učitaj set podataka" />
                   <MenuItem mnemonicParsing="false" text="Odredi sadržaj" />
-                  <MenuItem mnemonicParsing="false" text="Konstruiši set podataka" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleItemConstructDS" text="Construct data sets" />
               <MenuItem fx:id="exitItem" mnemonicParsing="false" text="Izlaz" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="Pomoć">
+            <Menu mnemonicParsing="false" text="Setings">
+              <items>
+                  <RadioMenuItem fx:id="radMeni50" mnemonicParsing="false" text="50 Points">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="meniToggleGroup" />
+                     </toggleGroup>
+                  </RadioMenuItem>
+                  <RadioMenuItem fx:id="radMeni100" mnemonicParsing="false" text="100 Points" toggleGroup="$meniToggleGroup" />
+                  <RadioMenuItem fx:id="radMeni250" mnemonicParsing="false" selected="true" text="250 Points" toggleGroup="$meniToggleGroup" />
+              </items>
+            </Menu>
+          <Menu mnemonicParsing="false" text="Help">
             <items>
               <MenuItem mnemonicParsing="false" text="About" />
             </items>
@@ -52,13 +64,13 @@
                   <Label text="Prikaži: " />
                   <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" text="Originalnu">
                      <toggleGroup>
-                        <ToggleGroup fx:id="toggleGroup" />
+                        <ToggleGroup fx:id="rbToggleGroup" />
                      </toggleGroup></RadioButton>
-                  <RadioButton fx:id="rBtnBinary" mnemonicParsing="false" text="Binarnu" toggleGroup="$toggleGroup" />
-                  <RadioButton fx:id="rBtnContour" mnemonicParsing="false" text="Konturu" toggleGroup="$toggleGroup" />
-                  <RadioButton fx:id="rBtnPoints" mnemonicParsing="false" text="Tačke" toggleGroup="$toggleGroup" />
-                  <RadioButton fx:id="rBtnCircle" mnemonicParsing="false" text="Kružnicu" toggleGroup="$toggleGroup" />
-                  <RadioButton fx:id="rBtnRegions" mnemonicParsing="false" text="Regione" toggleGroup="$toggleGroup" />
+                  <RadioButton fx:id="rBtnBinary" mnemonicParsing="false" text="Binarnu" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnContour" mnemonicParsing="false" text="Konturu" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnPoints" mnemonicParsing="false" text="Tačke" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnCircle" mnemonicParsing="false" text="Kružnicu" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnRegions" mnemonicParsing="false" text="Regione" toggleGroup="$rbToggleGroup" />
                </children>
                <VBox.margin>
                   <Insets />
@@ -89,9 +101,9 @@
                   <Insets right="15.0" />
                </padding>
             </HBox>
-            <HBox alignment="BOTTOM_LEFT" prefHeight="18.0" spacing="10.0">
+            <HBox alignment="BOTTOM_LEFT" prefHeight="18.0" spacing="15.0">
                <children>
-                  <Label fx:id="label" minWidth="40.0" prefHeight="20.0" prefWidth="300.0">
+                  <Label fx:id="label" prefHeight="20.0">
                      <font>
                         <Font size="14.0" />
                      </font>
