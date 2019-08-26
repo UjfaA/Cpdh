@@ -26,11 +26,11 @@
           <Menu mnemonicParsing="false" text="Meni">
             <items>
                   <MenuItem fx:id="loadImageItem" mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load image" />
-                  <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Sačuvaj slike" />
-                  <MenuItem fx:id="loadDBItem" mnemonicParsing="false" text="Učitaj set podataka" />
-                  <MenuItem mnemonicParsing="false" text="Odredi sadržaj" />
+                  <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Save images" />
+                  <MenuItem fx:id="loadDBItem" mnemonicParsing="false" text="Load data set" />
+                  <MenuItem mnemonicParsing="false" text="Determine shape" />
                   <MenuItem mnemonicParsing="false" onAction="#handleItemConstructDS" text="Construct data sets" />
-              <MenuItem fx:id="exitItem" mnemonicParsing="false" text="Izlaz" />
+              <MenuItem fx:id="exitItem" mnemonicParsing="false" text="Quit" />
             </items>
           </Menu>
             <Menu mnemonicParsing="false" text="Setings">
@@ -61,16 +61,16 @@
                </VBox.margin></ImageView>
             <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" hgap="15.0" vgap="5.0">
                <children>
-                  <Label text="Prikaži: " />
-                  <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" text="Originalnu">
+                  <Label text="Show: " />
+                  <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" text="Original">
                      <toggleGroup>
                         <ToggleGroup fx:id="rbToggleGroup" />
                      </toggleGroup></RadioButton>
-                  <RadioButton fx:id="rBtnBinary" mnemonicParsing="false" text="Binarnu" toggleGroup="$rbToggleGroup" />
-                  <RadioButton fx:id="rBtnContour" mnemonicParsing="false" text="Konturu" toggleGroup="$rbToggleGroup" />
-                  <RadioButton fx:id="rBtnPoints" mnemonicParsing="false" text="Tačke" toggleGroup="$rbToggleGroup" />
-                  <RadioButton fx:id="rBtnCircle" mnemonicParsing="false" text="Kružnicu" toggleGroup="$rbToggleGroup" />
-                  <RadioButton fx:id="rBtnRegions" mnemonicParsing="false" text="Regione" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnBinary" mnemonicParsing="false" text="Binarny" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnContour" mnemonicParsing="false" text="Contour" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnPoints" mnemonicParsing="false" text="Points" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnCircle" mnemonicParsing="false" text="Circle" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnRegions" mnemonicParsing="false" text="Regions" toggleGroup="$rbToggleGroup" />
                </children>
                <VBox.margin>
                   <Insets />
@@ -93,9 +93,9 @@
             </TextArea>
             <HBox alignment="BOTTOM_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="50.0" spacing="10.0">
                <children>
-                  <Button fx:id="btnAutoCompare" mnemonicParsing="false" text="Automatsko poređenje" />
-                  <Button fx:id="btnLoad" minWidth="-Infinity" mnemonicParsing="false" text="Učitaj sliku" textAlignment="CENTER" />
-                  <Button fx:id="btnCompare" minWidth="-Infinity" mnemonicParsing="false" text="Odredi sadržaj" />
+                  <Button fx:id="btnAutoCompare" mnemonicParsing="false" text="Auto compare test" />
+                  <Button fx:id="btnLoad" minWidth="-Infinity" mnemonicParsing="false" text="Load Image" textAlignment="CENTER" />
+                  <Button fx:id="btnCompare" minWidth="-Infinity" mnemonicParsing="false" text="Determine shape" />
                </children>
                <padding>
                   <Insets right="15.0" />

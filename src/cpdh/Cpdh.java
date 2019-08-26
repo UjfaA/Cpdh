@@ -24,12 +24,27 @@ import javafx.scene.image.Image;
 
 public class Cpdh {
 	
+	private static final List<String> GROUP_NAMES = getGroupNames(); // List of names of groups from MPEG-7 shape data set.
+	
 //	private final int numOfPoints;
 	private final int[] histogram;
 	private final Mat signature;
 	private final List<Image> images;
+	private boolean isPartOfDataSet; // Infer from file name.  
+	private int position; // Position in group in data set. Derived from file name. If not part of data set then = -1;
 
+	private static List<String> getGroupNames() { 
 
+		return List.of("apple", "bat", "beetle", "bell", "bird", "Bone", "bottle", "brick", "butterfly",
+				"camel", "car", "carriage", "catle", "cellular_phone", "chicken", "children", "chopper",
+				"classic", "Comma", "crown", "cup", "deer", "device0", "device1", "device2", "device3",
+				"device4", "device5", "device6", "device7", "device8", "device9", "dog", "elephant", "face",
+				"fish", "flatfish", "fly", "fork", "fountain", "frog", "Glas", "guitar", "hammer", "hat",
+				"HCircle", "Heart", "horse", "horseshoe", "jar", "key", "lizzard", "lmfish", "Misk",
+				"octopus", "pencil", "personal_car", "pocket", "rat", "ray", "sea_snake", "shoe", "spoon",
+				"spring", "stef", "teddy", "tree", "truck", "turtle", "watch");
+	}
+	
 	public Cpdh(File file, int numOfPoints) {
 
 		this(file, numOfPoints, true);
@@ -41,6 +56,19 @@ public class Cpdh {
 		this.histogram = result.histogram;
 		this.signature = toSignature(result.histogram);
 		this.images = result.getImages();
+		try {
+			
+			this.isPartOfDataSet = checkIfPartOfDataSet(file);
+			this.position = isPartOfDataSet ? readPosition(file)
+											: -1;			
+		
+		} catch (Exception e) {
+			this.isPartOfDataSet = false;
+			this.position = -1;
+		}
+		
+		System.out.println(isPartOfDataSet);
+		System.out.println(position);
 	}
 
 	private ResultsContainer processFile(File file, int numOfPoints, boolean saveImages) {
@@ -333,7 +361,7 @@ public class Cpdh {
 		return signature;
 	}
 
-	private Mat [] toPolar (Point [] points, Point center) {
+	private Mat[] toPolar (Point[] points, Point center) {
 		
 		Mat pointsX = new Mat(1, points.length, CvType.CV_32FC1);
 		Mat pointsY = new Mat(1, points.length, CvType.CV_32FC1);
@@ -349,55 +377,30 @@ public class Cpdh {
 		Mat Angle		= new Mat(pointsX.size(), CvType.CV_32FC1);	
 		
 		Core.cartToPolar(pointsX, pointsY, Magnitude, Angle, true);
-		Mat [] polarCoordinates = new Mat [2];
+		Mat[] polarCoordinates = new Mat[2];
 		polarCoordinates [0] = Magnitude;
 		polarCoordinates [1] = Angle;
 		
 		return polarCoordinates;
 	}
 
-	private class ResultsContainer {
+	private boolean checkIfPartOfDataSet(File file) {
+		
+		String name = file.getName();
+		int indexDash = name.lastIndexOf('-');
+		String group = name.substring(0, indexDash);
+		if (GROUP_NAMES.contains(group))
+			return true;
+		else
+			return false;
+	}
 
-		private int[] histogram;
-		private float radius;
-		private Point center;
-		private Point[] sampledPoints;
-		private ArrayList<Mat> matImages = new ArrayList<Mat>();
-
-		private List<Image> getImages() {
-			
-			/*
-			 * make FX Image
-			 * Mat -> BufferedImage -> FX Image
-			 * more details at:
-			 * https://stackoverflow.com/questions/26515981/display-image-using-mat-in-opencv-java
-			 * and:
-			 * http://lovelace.augustana.edu/q2a/index.php/217/which-way-of-converting-mat-to-javafx-image-is-fastest
-			 */			
-			List<Image> imagesFX = new ArrayList<Image>();
-
-			var itr = matImages.iterator();
-
-			while(itr.hasNext()) {
-
-				Mat mat = itr.next();
-
-				int type;
-				if	(mat.channels() == 1)
-					type = BufferedImage.TYPE_BYTE_GRAY;
-				else if (mat.channels() == 3)
-					type = BufferedImage.TYPE_3BYTE_BGR;
-				else 
-					throw new IllegalArgumentException("Unsuported number of channels");
-
-				BufferedImage image = new BufferedImage(mat.width(), mat.height(), type);
-				DataBufferByte dataBuffer = (DataBufferByte) image.getRaster().getDataBuffer();
-				byte[] data = dataBuffer.getData();
-				mat.get(0, 0, data);
-				imagesFX.add(SwingFXUtils.toFXImage(image, null));
-			}
-			return List.copyOf(imagesFX); // returns immutable list
-		}
+	private int readPosition(File file) {
+		
+		String name = file.getName();
+		int indexDash = name.lastIndexOf('-');
+		int indexDot = name.lastIndexOf('.');
+		return Integer.parseInt(name, indexDash + 1, indexDot, 10) - 1; // -1 because zero indexing
 	}
 
 	List<Image> getImages() {
@@ -411,6 +414,75 @@ public class Cpdh {
 			output.append(bin).append(' ');
 		}
 		return output.toString();
+	}
+
+	public String toString() {
+		
+		StringBuilder sb = new StringBuilder("[");
+		int col = 0;
+		for (int i = 0; i < histogram.length; i++ ) {
+			
+			sb.append(
+					String.format(" %2d", histogram[i]));
+			if (col >= 11) {
+				
+				sb.append(";\n ");
+				col = 0;
+				continue;
+			}
+			
+			sb.append(", ");
+			col++;
+		}
+		
+		sb.setLength(sb.length() - 3);
+		sb.append(" ]");
+		
+		return sb.toString();
+	}
+
+	private class ResultsContainer {
+	
+		private int[] histogram;
+		private float radius;
+		private Point center;
+		private Point[] sampledPoints;
+		private ArrayList<Mat> matImages = new ArrayList<Mat>();
+	
+		private List<Image> getImages() {
+			
+			/*
+			 * make FX Image
+			 * Mat -> BufferedImage -> FX Image
+			 * more details at:
+			 * https://stackoverflow.com/questions/26515981/display-image-using-mat-in-opencv-java
+			 * and:
+			 * http://lovelace.augustana.edu/q2a/index.php/217/which-way-of-converting-mat-to-javafx-image-is-fastest
+			 */			
+			List<Image> imagesFX = new ArrayList<Image>();
+	
+			var itr = matImages.iterator();
+	
+			while(itr.hasNext()) {
+	
+				Mat mat = itr.next();
+	
+				int type;
+				if	(mat.channels() == 1)
+					type = BufferedImage.TYPE_BYTE_GRAY;
+				else if (mat.channels() == 3)
+					type = BufferedImage.TYPE_3BYTE_BGR;
+				else 
+					throw new IllegalArgumentException("Unsuported number of channels");
+	
+				BufferedImage image = new BufferedImage(mat.width(), mat.height(), type);
+				DataBufferByte dataBuffer = (DataBufferByte) image.getRaster().getDataBuffer();
+				byte[] data = dataBuffer.getData();
+				mat.get(0, 0, data);
+				imagesFX.add(SwingFXUtils.toFXImage(image, null));
+			}
+			return List.copyOf(imagesFX); // returns immutable list
+		}
 	}
 
 

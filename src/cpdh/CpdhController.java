@@ -53,16 +53,18 @@ public class CpdhController {
 	private final FileChooser fileChooser = new FileChooser();
 	private final DirectoryChooser directoryChooser = new DirectoryChooser();
 	
+	//TODO shut down on exit
 	private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 	private Cpdh cpdh;
-	private List<List<Cpdh>> curentDataSet;
+	private List<List<Cpdh>> selectedtDataSet;
 	private Map< Integer, List<List<Cpdh>> > dataSets;
 	
 	
 	@FXML
 	private void initialize() {
 		
+		/* configure selection of numOfPoints */
 		radMeni50.setUserData(Integer.valueOf(50));
 		radMeni100.setUserData(Integer.valueOf(100));
 		radMeni250.setUserData(Integer.valueOf(250));
@@ -70,9 +72,10 @@ public class CpdhController {
 		meniToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
 			Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
 			if (dataSets != null)
-			curentDataSet = dataSets.get(dataSetKey);
+				selectedtDataSet = dataSets.get(dataSetKey);
 		});
 		
+		/* configure rbToggleGroup */
 		rbToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
 
 			Image image = (Image) rbToggleGroup.getSelectedToggle().getUserData();
@@ -88,18 +91,17 @@ public class CpdhController {
 		fileChooser.getExtensionFilters().add(
 				new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jepg", "*.png", "*.bmp"));
 		fileChooser.setInitialDirectory(new File(".\\pictures"));
-		File file = fileChooser.showOpenDialog(imageView.getScene().getWindow());
+		final File file = fileChooser.showOpenDialog(imageView.getScene().getWindow());
 		
 		if (file != null) {
 			
-//			updateSkipPosition(file);
-			
 			Task<Cpdh> processFile = new Task<Cpdh>() {
-
+				
 				@Override
 				protected Cpdh call() throws Exception {
 					int numOfPoints = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
 					return new Cpdh(file, numOfPoints);
+					
 				}
 			};
 			processFile.setOnSucceeded(event -> {
@@ -110,7 +112,7 @@ public class CpdhController {
 					textField.setText("");
 					textArea.setText(cpdh.toString());
 					this.cpdh = cpdh;
-					//						TODO Enable save
+					//						TODO Enable save meni
 				} catch (InterruptedException | ExecutionException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -121,6 +123,93 @@ public class CpdhController {
 	}
 	
 	@FXML
+		private void handleItemCompare() {
+			
+			if (cpdh == null) {
+				label.setText("Please load image first.");
+				return;
+			}
+			if (selectedtDataSet == null || selectedtDataSet.isEmpty()) {
+				label.setText("Please load CPDH data set first.");
+				return;
+			}
+			
+//			int result = cpdh.runComparation(selectedtDataSet, SKIP_POSITION);
+//			textField.setText("Grupa: " + String.valueOf(result) + " - " + GROUP_NAMES.get(result));
+	
+	
+	//		
+	//		/* učitaj sve datoteke */
+	//		
+	//		File dir = new File("pictures\\jpeg");
+	//		if (!dir.isDirectory()) {
+	//			System.out.println("NOT DIRECTORY");
+	//		}
+	//		 // file.listFiles() do not guarantee any order 
+	//		File [] files = dir.listFiles((d, s) -> {
+	//			return s.endsWith("-1.jpg") || s.endsWith("-01.jpg");
+	//		});
+	//		sort(files);
+	//		
+	//		/* write all files' names to file */
+	//		ArrayList<String> sortedFiles = new ArrayList<String>(files.length);
+	//		for (int i = 0; i < files.length; i++) {
+	//			sortedFiles.add(files[i].getName());
+	//		}
+	//		try {
+	//			File sortedFilesTxt = new File ("pictures\\output\\Sorted test files Auto.txt");
+	//			Files.write(sortedFilesTxt.toPath(), sortedFiles,
+	//					StandardOpenOption.CREATE,
+	//					StandardOpenOption.WRITE,
+	//					StandardOpenOption.TRUNCATE_EXISTING);
+	//		} catch (IOException e) {
+	//			System.out.println("Error");
+	//			e.printStackTrace();
+	//		}
+	//
+	//		/* obradi sve datoteke */
+	//		
+	//		ArrayList<String> outputLinesAuto = new ArrayList<String>(128);
+	//		StringBuilder line = new StringBuilder(256);
+	//		int grupa, brPogodaka = 0;
+	//		try {
+	//			
+	//			for (int i = 0; i < files.length; i++) {
+	//				File file = files[i];
+	//				matSrc = Imgcodecs.imread(file.getPath());				
+	//				processImage(matSrc);
+	//				grupa = histogram.runComparation(dataset);
+	//				if (grupa == i)
+	//					brPogodaka += 1;
+	//				line.delete(0, line.length())
+	//				.append("datoteka: " ).append(String.format("%-20s", file.getName()) )
+	//				.append("\t\točekivani rezultat: ").append(String.format("%-20s", GROUP_NAMES[i]))
+	//				.append("\tdobijeni rezultat: ").append(String.format("%-20s",GROUP_NAMES[grupa]));
+	//				outputLinesAuto.add(line.toString());
+	//			}
+	//		} catch (Exception e) {
+	//			System.out.println("Error");
+	//			e.printStackTrace();
+	//		}
+	//		
+	//		double procenat = ((double) brPogodaka) / files.length;
+	//		outputLinesAuto.add("Tačno prepoznato: " + brPogodaka + " slika. Tačnost: " + procenat);
+	//		try {
+	//			
+	//			File outputFileAuto = new File ("pictures\\output\\Automatsko poređenje rezultat.txt");
+	//			Files.write(outputFileAuto.toPath(), outputLinesAuto,
+	//					StandardOpenOption.CREATE,
+	//					StandardOpenOption.WRITE,
+	//					StandardOpenOption.TRUNCATE_EXISTING);
+	//		} catch (IOException e) {
+	//			System.out.println("Error");
+	//			e.printStackTrace();
+	//		}
+	//
+			
+				}
+
+	@FXML
 	private void handleItemConstructDS() {
 		
 		directoryChooser.setTitle("Select folder that contains data set.");
@@ -129,12 +218,12 @@ public class CpdhController {
 
 		if (dir != null) { 
 
-			var constructCompleteDs = configureConstDSTask(dir);
-			executorService.execute(constructCompleteDs);
+			var constructCompleteDS = configureConstDSTask(dir);
+			executorService.execute(constructCompleteDS);
 
-			label.setText("Constructing data sets ...");
-			progresBar.progressProperty().bind(constructCompleteDs.progressProperty());
+			progresBar.progressProperty().bind(constructCompleteDS.progressProperty());
 			progresBar.setVisible(true);
+			label.setText("Constructing data sets ...");
 		}
 	}
 
@@ -203,7 +292,8 @@ public class CpdhController {
 			try {
 				dataSets = constructCompleteDS.get();
 				Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
-				curentDataSet = dataSets.get(dataSetKey);
+				selectedtDataSet = dataSets.get(dataSetKey);
+				progresBar.progressProperty().unbind();
 				progresBar.setVisible(false);
 				label.setText("Data sets constructed and saved");
 			} catch (InterruptedException | ExecutionException e) {
