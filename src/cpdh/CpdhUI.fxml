@@ -27,8 +27,8 @@
             <items>
                   <MenuItem fx:id="loadImageItem" mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load image" />
                   <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Save images" />
-                  <MenuItem fx:id="loadDBItem" mnemonicParsing="false" text="Load data set" />
-                  <MenuItem mnemonicParsing="false" text="Determine shape" />
+                  <MenuItem fx:id="loadDBItem" disable="true" mnemonicParsing="false" text="Load data set" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleItemRetrieveShape" text="Determine shape" />
                   <MenuItem mnemonicParsing="false" onAction="#handleItemConstructDS" text="Construct data sets" />
               <MenuItem fx:id="exitItem" mnemonicParsing="false" text="Quit" />
             </items>
@@ -94,8 +94,8 @@
             <HBox alignment="BOTTOM_RIGHT" minHeight="-Infinity" minWidth="-Infinity" prefHeight="50.0" spacing="10.0">
                <children>
                   <Button fx:id="btnAutoCompare" mnemonicParsing="false" text="Auto compare test" />
-                  <Button fx:id="btnLoad" minWidth="-Infinity" mnemonicParsing="false" text="Load Image" textAlignment="CENTER" />
-                  <Button fx:id="btnCompare" minWidth="-Infinity" mnemonicParsing="false" text="Determine shape" />
+                  <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#handleBtnLoadImage" text="Load Image" textAlignment="CENTER" />
+                  <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#handleBtnRetrieveShape" text="Retrieve shape" />
                </children>
                <padding>
                   <Insets right="15.0" />

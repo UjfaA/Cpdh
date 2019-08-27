@@ -57,7 +57,7 @@ public class CpdhController {
 	private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 	private Cpdh cpdh;
-	private List<List<Cpdh>> selectedtDataSet;
+	private List<List<Cpdh>> selectedDataSet;
 	private Map< Integer, List<List<Cpdh>> > dataSets;
 	
 	
@@ -72,7 +72,7 @@ public class CpdhController {
 		meniToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
 			Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
 			if (dataSets != null)
-				selectedtDataSet = dataSets.get(dataSetKey);
+				selectedDataSet = dataSets.get(dataSetKey);
 		});
 		
 		/* configure rbToggleGroup */
@@ -84,24 +84,33 @@ public class CpdhController {
 	}
 	
 	@FXML
-	 private void handleItemLoadImage() {
-		
+	private void handleBtnLoadImage() {
+		handleItemLoadImage();
+	}
+	
+	@FXML
+	private void handleBtnRetrieveShape() {
+		handleItemRetrieveShape();
+	}
+	
+	@FXML
+	private void handleItemLoadImage() {
+
 		fileChooser.setTitle("Choose image file to open.");
 		fileChooser.getExtensionFilters().clear();
 		fileChooser.getExtensionFilters().add(
 				new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jepg", "*.png", "*.bmp"));
 		fileChooser.setInitialDirectory(new File(".\\pictures"));
 		final File file = fileChooser.showOpenDialog(imageView.getScene().getWindow());
-		
+
 		if (file != null) {
-			
+
 			Task<Cpdh> processFile = new Task<Cpdh>() {
-				
+
 				@Override
 				protected Cpdh call() throws Exception {
 					int numOfPoints = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
 					return new Cpdh(file, numOfPoints);
-					
 				}
 			};
 			processFile.setOnSucceeded(event -> {
@@ -121,93 +130,38 @@ public class CpdhController {
 			executorService.submit(processFile);
 		}
 	}
-	
+
 	@FXML
-		private void handleItemCompare() {
-			
-			if (cpdh == null) {
-				label.setText("Please load image first.");
-				return;
+	private void handleItemRetrieveShape() {
+
+		if (cpdh == null) {
+			label.setText("Please load image first.");
+			return;
+		}
+		if (selectedDataSet == null || selectedDataSet.isEmpty()) {
+			label.setText("Please construct CPDH data set first.");
+			return;
+		}
+		
+		Task<String> retrieveShape = new Task<>() {
+
+			@Override
+			protected String call() throws Exception {
+				return cpdh.retrieveShape(selectedDataSet);					
 			}
-			if (selectedtDataSet == null || selectedtDataSet.isEmpty()) {
-				label.setText("Please load CPDH data set first.");
-				return;
+		};
+
+		retrieveShape.setOnSucceeded(event -> {
+			try {
+				textField.setText("Best match : " + retrieveShape.get());
+			} catch (InterruptedException | ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			
-//			int result = cpdh.runComparation(selectedtDataSet, SKIP_POSITION);
-//			textField.setText("Grupa: " + String.valueOf(result) + " - " + GROUP_NAMES.get(result));
-	
-	
-	//		
-	//		/* učitaj sve datoteke */
-	//		
-	//		File dir = new File("pictures\\jpeg");
-	//		if (!dir.isDirectory()) {
-	//			System.out.println("NOT DIRECTORY");
-	//		}
-	//		 // file.listFiles() do not guarantee any order 
-	//		File [] files = dir.listFiles((d, s) -> {
-	//			return s.endsWith("-1.jpg") || s.endsWith("-01.jpg");
-	//		});
-	//		sort(files);
-	//		
-	//		/* write all files' names to file */
-	//		ArrayList<String> sortedFiles = new ArrayList<String>(files.length);
-	//		for (int i = 0; i < files.length; i++) {
-	//			sortedFiles.add(files[i].getName());
-	//		}
-	//		try {
-	//			File sortedFilesTxt = new File ("pictures\\output\\Sorted test files Auto.txt");
-	//			Files.write(sortedFilesTxt.toPath(), sortedFiles,
-	//					StandardOpenOption.CREATE,
-	//					StandardOpenOption.WRITE,
-	//					StandardOpenOption.TRUNCATE_EXISTING);
-	//		} catch (IOException e) {
-	//			System.out.println("Error");
-	//			e.printStackTrace();
-	//		}
-	//
-	//		/* obradi sve datoteke */
-	//		
-	//		ArrayList<String> outputLinesAuto = new ArrayList<String>(128);
-	//		StringBuilder line = new StringBuilder(256);
-	//		int grupa, brPogodaka = 0;
-	//		try {
-	//			
-	//			for (int i = 0; i < files.length; i++) {
-	//				File file = files[i];
-	//				matSrc = Imgcodecs.imread(file.getPath());				
-	//				processImage(matSrc);
-	//				grupa = histogram.runComparation(dataset);
-	//				if (grupa == i)
-	//					brPogodaka += 1;
-	//				line.delete(0, line.length())
-	//				.append("datoteka: " ).append(String.format("%-20s", file.getName()) )
-	//				.append("\t\točekivani rezultat: ").append(String.format("%-20s", GROUP_NAMES[i]))
-	//				.append("\tdobijeni rezultat: ").append(String.format("%-20s",GROUP_NAMES[grupa]));
-	//				outputLinesAuto.add(line.toString());
-	//			}
-	//		} catch (Exception e) {
-	//			System.out.println("Error");
-	//			e.printStackTrace();
-	//		}
-	//		
-	//		double procenat = ((double) brPogodaka) / files.length;
-	//		outputLinesAuto.add("Tačno prepoznato: " + brPogodaka + " slika. Tačnost: " + procenat);
-	//		try {
-	//			
-	//			File outputFileAuto = new File ("pictures\\output\\Automatsko poređenje rezultat.txt");
-	//			Files.write(outputFileAuto.toPath(), outputLinesAuto,
-	//					StandardOpenOption.CREATE,
-	//					StandardOpenOption.WRITE,
-	//					StandardOpenOption.TRUNCATE_EXISTING);
-	//		} catch (IOException e) {
-	//			System.out.println("Error");
-	//			e.printStackTrace();
-	//		}
-	//
-			
-				}
+		});
+
+		executorService.execute(retrieveShape);
+	}
 
 	@FXML
 	private void handleItemConstructDS() {
@@ -292,7 +246,7 @@ public class CpdhController {
 			try {
 				dataSets = constructCompleteDS.get();
 				Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
-				selectedtDataSet = dataSets.get(dataSetKey);
+				selectedDataSet = dataSets.get(dataSetKey);
 				progresBar.progressProperty().unbind();
 				progresBar.setVisible(false);
 				label.setText("Data sets constructed and saved");

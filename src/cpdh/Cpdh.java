@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.PriorityQueue;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -13,6 +14,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -25,6 +27,7 @@ import javafx.scene.image.Image;
 public class Cpdh {
 	
 	private static final List<String> GROUP_NAMES = getGroupNames(); // List of names of groups from MPEG-7 shape data set.
+	private static final Mat COST_MATRIX = generateCostMat(36, 3);
 	
 //	private final int numOfPoints;
 	private final int[] histogram;
@@ -33,10 +36,11 @@ public class Cpdh {
 	private boolean isPartOfDataSet; // Infer from file name.  
 	private int position; // Position in group in data set. Derived from file name. If not part of data set then = -1;
 
+
 	private static List<String> getGroupNames() { 
 
 		return List.of("apple", "bat", "beetle", "bell", "bird", "Bone", "bottle", "brick", "butterfly",
-				"camel", "car", "carriage", "catle", "cellular_phone", "chicken", "children", "chopper",
+				"camel", "car", "carriage", "cattle", "cellular_phone", "chicken", "children", "chopper",
 				"classic", "Comma", "crown", "cup", "deer", "device0", "device1", "device2", "device3",
 				"device4", "device5", "device6", "device7", "device8", "device9", "dog", "elephant", "face",
 				"fish", "flatfish", "fly", "fork", "fountain", "frog", "Glas", "guitar", "hammer", "hat",
@@ -45,6 +49,64 @@ public class Cpdh {
 				"spring", "stef", "teddy", "tree", "truck", "turtle", "watch");
 	}
 	
+	static private Mat generateCostMat( int histLength , int numOfCircles) {
+	
+		int elementsInCircle = histLength / numOfCircles;
+		int maxDist1 = elementsInCircle / 2;   // maximal distance inside a circle (rounded down)
+		
+		Mat DIST_COST = new Mat(histLength, histLength, CvType.CV_32FC1);
+		
+		Mat[][] blocks = new Mat[numOfCircles][numOfCircles];
+		
+		// define blocks
+		Rect roi = new Rect(0, 0, elementsInCircle, elementsInCircle) ;
+		
+		for (int row = 0; row < numOfCircles; row++) {
+			
+			for (int col = 0; col < numOfCircles; col++) {
+				
+				//updateRoi(roi, col, row, elementsInCircle);
+				roi.x = col * elementsInCircle;
+				roi.y = row * elementsInCircle;
+				blocks[row][col] = DIST_COST.submat(roi);
+			}
+			
+		}
+		
+		// calculate 1st block
+		Mat block00 = blocks[0][0];
+		//float [] distanceArray1st = new float[blok00.rows() * blok00.cols()];
+		float [][] distanceBlock = new float [block00.rows()] [block00.cols()];
+		
+		// first block
+		for (int row = 0; row < block00.rows(); row++) {
+	
+			// for 1 row
+			for (int col = 0; col < block00.cols(); col++) {
+	
+				//distanceArray1st[row * block00.cols() + (row + col) % elementsInCircle] = maxDist1 - Math.abs(maxDist1 - col);
+				
+				distanceBlock [row] [(row + col) % block00.cols()] = maxDist1 - Math.abs(maxDist1 - col);
+			}
+			
+			block00.put(row, 0, distanceBlock [row] );
+		}
+		
+		
+		// fill in rest of the blocks
+		Scalar circleDiference = new Scalar(0); // 0 - in same circle; 1 - 1 circle distance ... 
+		for(int row = 0; row < blocks.length; row ++) {
+	
+			for(int col = 0; col < blocks[0].length; col ++) {
+				
+				circleDiference.val[0] =  (Math.abs(row - col));
+				Core.add(block00, circleDiference, blocks [row] [col]);
+			}
+		}
+		
+		return DIST_COST;
+	}
+
 	public Cpdh(File file, int numOfPoints) {
 
 		this(file, numOfPoints, true);
@@ -66,9 +128,6 @@ public class Cpdh {
 			this.isPartOfDataSet = false;
 			this.position = -1;
 		}
-		
-		System.out.println(isPartOfDataSet);
-		System.out.println(position);
 	}
 
 	private ResultsContainer processFile(File file, int numOfPoints, boolean saveImages) {
@@ -353,14 +412,6 @@ public class Cpdh {
 	}
 
 	
-	private Mat toSignature(int[] histogram) {
-		
-		Mat signature = new Mat(histogram.length, 1, CvType.CV_32SC1);
-		signature.put(0, 0, histogram);
-		signature.convertTo(signature, CvType.CV_32FC1);
-		return signature;
-	}
-
 	private Mat[] toPolar (Point[] points, Point center) {
 		
 		Mat pointsX = new Mat(1, points.length, CvType.CV_32FC1);
@@ -401,6 +452,145 @@ public class Cpdh {
 		int indexDash = name.lastIndexOf('-');
 		int indexDot = name.lastIndexOf('.');
 		return Integer.parseInt(name, indexDash + 1, indexDot, 10) - 1; // -1 because zero indexing
+	}
+
+	private double getGroupScore(Mat[] testSet, List<Cpdh> group) {
+		
+		int capacity = testSet.length * group.size();
+		PriorityQueue<Float> scores = new PriorityQueue<Float>(capacity);
+		
+		boolean emdScoreZero = false; // flag is set when there is perfect match
+		
+		for (int position = 0; position < group.size(); position++) {
+			
+			if (this.isPartOfDataSet && this.position == position)
+				continue;
+			
+			for (int variation = 0; variation < testSet.length; variation++) {
+				
+				Float emd = Imgproc.EMD(testSet[variation], group.get(position).signature, Imgproc.DIST_USER, COST_MATRIX);
+				scores.add(emd);
+				if (emd == 0.0f)
+					emdScoreZero = true;
+			}
+		}
+		int take = 2;
+		double score = 0.00;
+		while (take > 0) {
+			System.out.println(scores.peek() );
+			score += scores.remove();
+			take--;
+		}
+		
+		if (emdScoreZero)
+			System.out.println("\nWarning: EMD score = 0.0\n");
+			
+		return score;
+	}
+
+	private Mat[] getSignatureVariations() {
+		
+		int[][] histogram2d = to2D(histogram);
+		
+		ArrayList<int[][]> variations = new ArrayList<int[][]>(24);
+		int[][] mirrored = getMirored(histogram2d);
+		variations.addAll(getRotations(histogram2d));
+		variations.addAll(getRotations(mirrored));		
+		
+		/* Conversion to signature */
+		Mat[] signatures = new Mat[variations.size()];
+		for (int i = 0; i < variations.size(); i++) {
+			
+			signatures[i] = toSignature( to1D(variations.get(i)));
+		}
+		return signatures;
+	}
+
+	private int[][] getMirored(int[][] histogram2d) {
+		
+		int[][] mirrored = new int[histogram2d.length][];
+		
+		int lastIndex = histogram2d.length - 1;
+		for (int i = 0; i < mirrored.length; i++) {
+			
+			mirrored[i] = histogram2d[lastIndex - i];
+		}
+		
+		return mirrored;
+	}
+
+	private ArrayList<int[][]> getRotations(int[][] histogram2d) {
+		
+		int[] [][] rotations = new int[12] [histogram2d.length][];
+		int cols = histogram2d.length;
+		for (int col = 0; col < cols; col++) {			// each column ...
+			for (int i = 0; i < rotations.length; i++) {
+				
+				rotations[i] [(col + i) % cols] = histogram2d[col]; 		// ... is shifted for i spaces.
+			}
+		}
+		return new ArrayList<int[][]>(Arrays.asList(rotations));
+	}
+
+	private Mat toSignature(int[] histogram) {
+		
+		Mat signature = new Mat(histogram.length, 1, CvType.CV_32SC1);
+		signature.put(0, 0, histogram);
+		signature.convertTo(signature, CvType.CV_32FC1);
+		return signature;
+	}
+
+	private int[] to1D(int[][] histogram2D) {
+		
+		int[] histogram = new int[36];
+		
+		/* loop through source */
+		int cols = 12;
+		int rows = 3;
+		for (int col = 0; col < cols; col++) {
+			for (int row = 0; row < rows; row++) {
+			
+				histogram [row * 12 + col] = histogram2D[col][row];
+			}
+		}
+		return histogram;
+	}
+
+	/* This 2D configuration enables easy manipulation */
+	private int[][] to2D(int[] histogram) {
+		
+		int cols = 12;
+		int rows = 3;
+		int[][] histogram2D = new int[cols][rows];
+		
+		/* loop through destination */
+		for (int col = 0; col < cols; col++) {
+			for (int row = 0; row < rows; row++) {
+			
+				histogram2D[col][row] = histogram [row * 12 + col];
+			}
+		}
+		return histogram2D;
+	}
+
+	String retrieveShape(List<List<Cpdh>> dataSet) {
+		
+		int groupMatched = 0;
+		double score = Double.MAX_VALUE , newScore = Double.MAX_VALUE;
+		Mat[] testSet = this.getSignatureVariations();
+		
+		/* for each group */
+		for (int i = 0; i < dataSet.size(); i++) {
+			
+			newScore = getGroupScore(testSet, dataSet.get(i));
+			if (newScore < score) {
+				
+				score = newScore;
+				groupMatched = i;
+			}
+		}
+		
+		return GROUP_NAMES.get(groupMatched);
 	}
 
 	List<Image> getImages() {
@@ -484,6 +674,4 @@ public class Cpdh {
 			return List.copyOf(imagesFX); // returns immutable list
 		}
 	}
-
-
 }
