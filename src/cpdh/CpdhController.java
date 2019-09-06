@@ -15,7 +15,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.RadioButton;
@@ -32,6 +34,8 @@ import javafx.stage.FileChooser;
 
 public class CpdhController {
 	
+	@FXML
+	private Button btnAutoCompare;
 	@FXML
 	private RadioMenuItem radMeni50, radMeni100, radMeni250;
 	@FXML
@@ -54,7 +58,7 @@ public class CpdhController {
 	private final DirectoryChooser directoryChooser = new DirectoryChooser();
 	
 	//TODO shut down on exit
-	private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	private final ExecutorService executorService = Executors.newCachedThreadPool();
 
 	private Cpdh cpdh;
 	private List<List<Cpdh>> selectedDataSet;
@@ -69,10 +73,12 @@ public class CpdhController {
 		radMeni100.setUserData(Integer.valueOf(100));
 		radMeni250.setUserData(Integer.valueOf(250));
 		
+		/* configure meniToggleGroup */
 		meniToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
-			Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
-			if (dataSets != null)
+			if (dataSets != null) {
+				Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
 				selectedDataSet = dataSets.get(dataSetKey);
+			}
 		});
 		
 		/* configure rbToggleGroup */
@@ -81,6 +87,11 @@ public class CpdhController {
 			Image image = (Image) rbToggleGroup.getSelectedToggle().getUserData();
 			imageView.setImage(image);
 		});
+		
+		// functionality not yet implemented
+		btnAutoCompare.setDisable(true);
+		btnAutoCompare.setVisible(false);
+		btnAutoCompare.setManaged(false);
 	}
 	
 	@FXML
@@ -114,13 +125,11 @@ public class CpdhController {
 				}
 			};
 			processFile.setOnSucceeded(event -> {
-
 				try {
-					Cpdh cpdh = processFile.get();
+					this.cpdh = processFile.get();
 					configRadBtn(cpdh.getImages());
 					textField.setText("");
 					textArea.setText(cpdh.toString());
-					this.cpdh = cpdh;
 					//						TODO Enable save meni
 				} catch (InterruptedException | ExecutionException e) {
 					// TODO Auto-generated catch block
@@ -139,7 +148,7 @@ public class CpdhController {
 			return;
 		}
 		if (selectedDataSet == null || selectedDataSet.isEmpty()) {
-			label.setText("Please construct CPDH data set first.");
+			label.setText("Please construct or load CPDH data set first.");
 			return;
 		}
 		
@@ -167,149 +176,64 @@ public class CpdhController {
 	private void handleItemConstructDS() {
 		
 		directoryChooser.setTitle("Select folder that contains data set.");
-		directoryChooser.setInitialDirectory(new File("."));
+		directoryChooser.setInitialDirectory(new File("pictures"));
 		File dir = directoryChooser.showDialog(imageView.getScene().getWindow());
 
 		if (dir != null) { 
 
-			var constructCompleteDS = configureConstDSTask(dir);
-			executorService.execute(constructCompleteDS);
-
-			progresBar.progressProperty().bind(constructCompleteDS.progressProperty());
-			progresBar.setVisible(true);
-			label.setText("Constructing data sets ...");
-		}
-	}
-
-	private Task< Map< Integer, List<List<Cpdh>> >> configureConstDSTask(File dir) {
-		
-		Task< Map< Integer, List<List<Cpdh>> > > constructCompleteDS = new Task<>() {
-			
-			@Override
-			protected Map<Integer, List<List<Cpdh>> > call() throws Exception {
-				
-				File[] files = dir.listFiles((directory, name) -> {
-					return name.endsWith(".jpg") || name.endsWith("jpeg") || name.endsWith(".png");
-				});
-				// file.listFiles() do not guarantee any order 
-				sortFiles(files);
-				updateProgress(1, 10);
-				
-				Map< Integer, List<List<Cpdh>> > dataSets = new ConcurrentHashMap<>();
-				
-				ConstructDSTask dataset50Task = new ConstructDSTask(files, 50);
-				executorService.execute(dataset50Task);
-				ConstructDSTask dataset100Task = new ConstructDSTask(files, 100);
-				executorService.execute(dataset100Task);
-				ConstructDSTask dataset250Task = new ConstructDSTask(files, 250);
-				executorService.execute(dataset250Task);
-				
-				dataSets.put(50, dataset50Task.get());
-				updateProgress(1, 3);
-				writeDSToFile(dataSets.get(50), dir, 50);
-				dataSets.put(100, dataset100Task.get());
-				updateProgress(2, 3);
-				writeDSToFile(dataSets.get(100), dir, 100);
-				dataSets.put(250, dataset250Task.get());
-				updateProgress(3, 3);
-				writeDSToFile(dataSets.get(250), dir, 250);
-								
-				return dataSets;
-			}
-
-			private void writeDSToFile(List<List<Cpdh>> dataSet, File dir, int sufix) {
-				
-				ArrayList<String> lines = new ArrayList<String>(1400);
-				dataSet.forEach(group -> {
-					group.forEach(cpdh -> {
-						lines.add(cpdh.toString1Line());
-					});
-				});
-				
-				/* write to file */
-				String fileName = dir.getName() + " data set " + sufix + ".txt"; 
-				File file = new File( dir, fileName);
+			var constructAllDataSets = Tasks.newConstructDataSetsTask(dir);
+			constructAllDataSets.setOnSucceeded(event -> {
 				try {
-					Files.write(file.toPath(), lines, 
-							StandardOpenOption.CREATE,
-							StandardOpenOption.TRUNCATE_EXISTING,
-							StandardOpenOption.WRITE);
-				} catch (Exception e) {
-					System.out.println("Error writing to file" + file.getName());
+					dataSets = constructAllDataSets.get();
+					Integer datasetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
+					selectedDataSet = dataSets.get(datasetKey);
+					writeDStoFile(dataSets.get(50), dir, 50);
+					writeDStoFile(dataSets.get(100), dir, 100);
+					writeDStoFile(dataSets.get(250), dir, 250);
+					progresBar.progressProperty().unbind();
+					progresBar.setVisible(false);
+					label.textProperty().unbind();
+					label.setText("Data sets are constructed and saved.");
+				} catch (InterruptedException | ExecutionException e) {
+					label.setText("Unable to construct data sets");
+					e.printStackTrace();
 				}
-				
-			}
-		
-		};
-		
-		constructCompleteDS.setOnSucceeded( (event) -> {
-			try {
-				dataSets = constructCompleteDS.get();
-				Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
-				selectedDataSet = dataSets.get(dataSetKey);
+			});
+			constructAllDataSets.setOnCancelled(event -> {
 				progresBar.progressProperty().unbind();
 				progresBar.setVisible(false);
-				label.setText("Data sets constructed and saved");
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
-			}
-		});
-		
-		return constructCompleteDS;
+				label.textProperty().unbind();
+				label.setText("Constructing data set cancelled.");
+				//TODO message user ?
+			});
+			executorService.execute(constructAllDataSets);
+			
+			progresBar.progressProperty().bind(constructAllDataSets.progressProperty());
+			progresBar.setVisible(true);
+			label.textProperty().bind(constructAllDataSets.messageProperty());
+		}
 	}
 
-	// TODO: delete
-	/*
-	@FXML
-	private void handleLoadImageFX() {
-	
-		fileChooser.setTitle("Choose image file");
-		fileChooser.getExtensionFilters().clear();
-		fileChooser.getExtensionFilters().add(
-				new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jepg", "*.png", "*.bmp"));
-		try {
-	
-			// open file
-			File file = fileChooser.showOpenDialog(null);
-			if (file != null) {
-	
-				Image image = new Image(file.toURI().toURL().toString(), true);
-				imageView.setImage(image);
-				fileChooser.setInitialDirectory(file.getParentFile());
-			}
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
+	private void writeDStoFile(List<List<Cpdh>> dataSet, File dir, int sufix) {
 		
-	}
-	*/
-	
-	private void sortFiles(File[] files) {
-		
-		Arrays.sort(files, new Comparator<File>() {
-	
-			@Override
-			public int compare(File f1, File f2) {
-				
-				String name1 = f1.getName();
-				int indexDash = name1.lastIndexOf('-');
-				int indexDot = name1.lastIndexOf('.');
-				String group1 = name1.substring(0, indexDash);
-				int  position1 = Integer.parseInt(name1, indexDash + 1, indexDot, 10);
-				
-				String name2 = f2.getName();
-				indexDash = name2.lastIndexOf('-');
-				indexDot = name2.lastIndexOf('.');
-				String group2 = name2.substring(0, indexDash);
-				int  position2 = Integer.parseInt(name2, indexDash +1, indexDot, 10);
-				
-				int groupComp = group1.compareToIgnoreCase(group2);
-				if (groupComp == 0)
-					return Integer.compare(position1, position2);
-				else
-					return groupComp;
-			}
+		ArrayList<String> lines = new ArrayList<String>(1400);
+		dataSet.forEach(group -> {
+			group.forEach(cpdh -> {
+				lines.add(cpdh.toString1Line());
+			});
 		});
+		
+		/* write to file */
+		String fileName = dir.getName() + " data set " + sufix + ".txt"; 
+		File file = new File( dir, fileName);
+		try {
+			Files.write(file.toPath(), lines, 
+					StandardOpenOption.CREATE,
+					StandardOpenOption.TRUNCATE_EXISTING,
+					StandardOpenOption.WRITE);
+		} catch (Exception e) {
+			System.out.println("Error writing to file" + file.getName());
+		}
 		
 	}
 
@@ -335,29 +259,4 @@ public class CpdhController {
 		rBtnOriginal.requestFocus();	
 	}
 
-	// TODO: delete
-	/*
-	@FXML
-	private void handleLoadImageFX() {
-	
-		fileChooser.setTitle("Choose image file");
-		fileChooser.getExtensionFilters().clear();
-		fileChooser.getExtensionFilters().add(
-				new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jepg", "*.png", "*.bmp"));
-		try {
-	
-			// open file
-			File file = fileChooser.showOpenDialog(null);
-			if (file != null) {
-	
-				Image image = new Image(file.toURI().toURL().toString(), true);
-				imageView.setImage(image);
-				fileChooser.setInitialDirectory(file.getParentFile());
-			}
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		
-	}
-	*/
 }
