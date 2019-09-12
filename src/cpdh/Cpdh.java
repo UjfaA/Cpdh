@@ -23,7 +23,6 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 
 
-
 public class Cpdh {
 	
 	private static final List<String> GROUP_NAMES = getGroupNames(); // List of names of groups from MPEG-7 shape data set.
@@ -35,7 +34,6 @@ public class Cpdh {
 	private final List<Image> images;
 	private boolean isPartOfDataSet; // Infer from file name.  
 	private int position; // Position in group in data set. Derived from file name. If not part of data set then = -1;
-
 
 	private static List<String> getGroupNames() { 
 
@@ -62,15 +60,12 @@ public class Cpdh {
 		Rect roi = new Rect(0, 0, elementsInCircle, elementsInCircle) ;
 		
 		for (int row = 0; row < numOfCircles; row++) {
-			
 			for (int col = 0; col < numOfCircles; col++) {
 				
-				//updateRoi(roi, col, row, elementsInCircle);
 				roi.x = col * elementsInCircle;
 				roi.y = row * elementsInCircle;
 				blocks[row][col] = DIST_COST.submat(roi);
 			}
-			
 		}
 		
 		// calculate 1st block
@@ -80,30 +75,24 @@ public class Cpdh {
 		
 		// first block
 		for (int row = 0; row < block00.rows(); row++) {
-	
-			// for 1 row
 			for (int col = 0; col < block00.cols(); col++) {
 	
 				//distanceArray1st[row * block00.cols() + (row + col) % elementsInCircle] = maxDist1 - Math.abs(maxDist1 - col);
 				
 				distanceBlock [row] [(row + col) % block00.cols()] = maxDist1 - Math.abs(maxDist1 - col);
 			}
-			
 			block00.put(row, 0, distanceBlock [row] );
 		}
-		
 		
 		// fill in rest of the blocks
 		Scalar circleDiference = new Scalar(0); // 0 - in same circle; 1 - 1 circle distance ... 
 		for(int row = 0; row < blocks.length; row ++) {
-	
 			for(int col = 0; col < blocks[0].length; col ++) {
 				
 				circleDiference.val[0] =  (Math.abs(row - col));
 				Core.add(block00, circleDiference, blocks [row] [col]);
 			}
 		}
-		
 		return DIST_COST;
 	}
 
@@ -119,15 +108,26 @@ public class Cpdh {
 		this.signature = toSignature(result.histogram);
 		this.images = result.getImages();
 		try {
-			
 			this.isPartOfDataSet = checkIfPartOfDataSet(file);
 			this.position = isPartOfDataSet ? readPosition(file)
-											: -1;			
-		
+											: -1;
 		} catch (Exception e) {
 			this.isPartOfDataSet = false;
 			this.position = -1;
 		}
+	}
+	
+	public Cpdh (String s) {
+		
+		int[] histogram = new int [36];  // 3 x 12 regions
+		String[] value = s.split("\\s+");
+		
+		for (int bin = 0; bin < histogram.length; bin++) {
+			histogram[bin] = Integer.parseInt(value[bin]);
+		}
+		this.histogram 	= histogram;
+		this.images		= List.of();
+		this.signature 	= toSignature(histogram);
 	}
 
 	private ResultsContainer processFile(File file, int numOfPoints, boolean saveImages) {
@@ -223,7 +223,7 @@ public class Cpdh {
 	
 	private boolean determineBackground(Mat matBinary) {
 		
-		/* black = 0 ; white = -1 */
+		/* black = 0 ; white = -1  ( as a result of unsigned byte to signed conversion ) */
 		
 		boolean backgroundIsBlack;
 		
@@ -258,7 +258,7 @@ public class Cpdh {
 		for (MatOfPoint contour : contours) {
 			allPoints.addAll(contour.toList());
 		}
-		Point[] sampledPoints = new Point [numOfPoints];
+		Point[] sampledPoints = new Point[numOfPoints];
 		int index;
 		double samplingIncrement = ( (double) allPoints.size()) / numOfPoints; // number of points between sampled points
 		
@@ -269,7 +269,7 @@ public class Cpdh {
 				System.out.println(String.format("Boom, index = %.8f", index));
 				index = allPoints.size() - 1;
 			}
-			sampledPoints [i] = allPoints.get(index);
+			sampledPoints[i] = allPoints.get(index);
 		}
 		
 		if ( allPoints.size() < numOfPoints ) {
@@ -287,7 +287,6 @@ public class Cpdh {
 				matDestination.put( (int) point.y, (int) point.x, 255);
 			}
 		}
-		
 		else if (pixels == 4) {
 	
 			Point rectPoint1 = new Point();
@@ -356,13 +355,11 @@ public class Cpdh {
 	}
 
 	/**
-	 * 
-	 * @param result This method adds histogram to result object
+	 * This method adds histogram to ResultsContainer object
+	 * @param result ResultsContainer object to which to add calculated Cpdh histogram
 	 */
 	private void calculateCpdh(ResultsContainer result) {
 		
-		
-	
 		float[] magnitude = new float [result.sampledPoints.length];
 		float[] angle = new float [result.sampledPoints.length];
 		Mat[] polarCoordinates = toPolar (result.sampledPoints, result.center);	
@@ -589,7 +586,6 @@ public class Cpdh {
 				groupMatched = i;
 			}
 		}
-		
 		return GROUP_NAMES.get(groupMatched);
 	}
 
@@ -612,19 +608,15 @@ public class Cpdh {
 		int col = 0;
 		for (int i = 0; i < histogram.length; i++ ) {
 			
-			sb.append(
-					String.format(" %2d", histogram[i]));
+			sb.append(String.format(" %2d", histogram[i]));
 			if (col >= 11) {
-				
 				sb.append(";\n ");
 				col = 0;
 				continue;
 			}
-			
 			sb.append(", ");
 			col++;
 		}
-		
 		sb.setLength(sb.length() - 3);
 		sb.append(" ]");
 		

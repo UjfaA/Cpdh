@@ -23,14 +23,14 @@
    <top>
       <MenuBar fx:id="menuBar" BorderPane.alignment="TOP_LEFT">
         <menus>
-          <Menu mnemonicParsing="false" text="Meni">
+          <Menu mnemonicParsing="false" text="Menu">
             <items>
                   <MenuItem fx:id="loadImageItem" mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load image" />
                   <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Save images" />
-                  <MenuItem fx:id="loadDBItem" disable="true" mnemonicParsing="false" text="Load data set" />
                   <MenuItem mnemonicParsing="false" onAction="#handleItemRetrieveShape" text="Retrieve shape" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleItemloadDS" text="Load data set" />
                   <MenuItem mnemonicParsing="false" onAction="#handleItemConstructDS" text="Construct data sets" />
-              <MenuItem fx:id="exitItem" mnemonicParsing="false" text="Quit" />
+              <MenuItem fx:id="exitItem" mnemonicParsing="false" onAction="#handleItemQuit" text="Quit" />
             </items>
           </Menu>
             <Menu mnemonicParsing="false" text="Setings">
@@ -72,7 +72,7 @@
                   <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" hgap="15.0" vgap="5.0">
                      <children>
                         <Label text="Show: " />
-                        <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" text="Original">
+                        <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" selected="true" text="Original">
                            <toggleGroup>
                               <ToggleGroup fx:id="rbToggleGroup" />
                            </toggleGroup>

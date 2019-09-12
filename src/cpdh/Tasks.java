@@ -4,10 +4,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.FutureTask;
 
 import javafx.concurrent.Task;
@@ -20,10 +20,10 @@ public class Tasks {
 
 	/**
 	 * prepares javafx Task that constructs Cpdh data sets with 50, 100 and 250 points.
-	 * each of individual sets is constructed asynchronously and placed in a Map< Integer, List<List<Cpdh>> >  
+	 * Each of individual sets is constructed asynchronously and placed in a Map< Integer, List<List<Cpdh>> >  
 	 * MPEG7- shape image date set is assumed.
 	 * @param dir directory where MPEG7- shape image date set is located
-	 * @return configured javafx Task that
+	 * @return configured javafx Task that constructs Cpdh data set
 	 */
 	static Task< Map<Integer, List<List<Cpdh>>> > newConstructDataSetsTask(File dir) {
 		
@@ -33,15 +33,13 @@ public class Tasks {
 			protected Map<Integer, List<List<Cpdh>> > call() throws Exception {
 				
 				updateMessage("Constructing data sets ...");
-				
-				Map<Integer, List<List<Cpdh>> > dataSets = new ConcurrentHashMap<>();
+				Map<Integer, List<List<Cpdh>> > dataSets = new HashMap<>();
 				File[] files = dir.listFiles((directory, name) -> {
 					return name.endsWith(".jpg") || name.endsWith("jpeg") || name.endsWith(".png");
 				});
 				if (files.length != 1400) {
 					updateMessage("Please make sure there are only images from data set in folder: " + dir.getName());
 					cancel();
-					return dataSets;
 				}
 				// file.listFiles() do not guarantee any order 
 				sortFiles(files);
@@ -66,6 +64,13 @@ public class Tasks {
 				
 				while (!dataset250Task.isDone() || !dataset100Task.isDone() || !dataset50Task.isDone()) {
 					
+					if (isCancelled() || Thread.interrupted()) {
+						updateMessage("Constructing data sets was canceled.");
+						dataset50Task.cancel(true);
+						dataset100Task.cancel(true);
+						dataset250Task.cancel(true);
+						cancel();
+						}
 					int workDone =  dataSetConstructor250.workDone + dataSetConstructor100.workDone + dataSetConstructor50.workDone;
 					updateProgress(workDone, 70*3);
 					Thread.sleep(250);
@@ -76,6 +81,7 @@ public class Tasks {
 				dataSets.put(50, dataset50Task.get());
 				dataSets.put(100, dataset100Task.get());
 				dataSets.put(250, dataset250Task.get());
+				
 				return dataSets;
 			}
 		};
@@ -98,7 +104,7 @@ public class Tasks {
 				indexDash = name2.lastIndexOf('-');
 				indexDot = name2.lastIndexOf('.');
 				String group2 = name2.substring(0, indexDash);
-				int  position2 = Integer.parseInt(name2, indexDash +1, indexDot, 10);
+				int  position2 = Integer.parseInt(name2, indexDash + 1, indexDot, 10);
 
 				int groupComp = group1.compareToIgnoreCase(group2);
 				if (groupComp == 0)
@@ -128,14 +134,17 @@ public class Tasks {
 			List<List<Cpdh>> dataSet = new ArrayList<>();
 			
 			for(int group = 0; group < groups; group++) {
-				/* Load each group */
-				List<Cpdh> cpdhGroup = new ArrayList<Cpdh>(positions);
-				for(int position = 0; position < positions; position++) {
-					int fileIndex = group * positions + position;
-					cpdhGroup.add(new Cpdh(files[fileIndex], numOfPoints, false));
+				if (Thread.interrupted() != true) { 
+					/* Load each group */
+					List<Cpdh> cpdhGroup = new ArrayList<Cpdh>(positions);
+					for(int position = 0; position < positions; position++) {
+						int fileIndex = group * positions + position;
+						cpdhGroup.add(new Cpdh(files[fileIndex], numOfPoints, false));
+					}
+					dataSet.add(cpdhGroup);
+					workDone = group + 1;
 				}
-				dataSet.add(cpdhGroup);
-				workDone = group + 1;
+				else return null;
 			}
 			return dataSet;
 		}
