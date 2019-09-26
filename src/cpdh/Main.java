@@ -21,6 +21,7 @@ public class Main extends Application {
 //			BorderPane root = (BorderPane)FXMLLoader.load(getClass().getResource("CpdhUI.fxml"));
 			BorderPane root = (BorderPane) loader.load();
 			controler = (CpdhController) loader.getController();
+			controler.setHostServices(getHostServices());
 			Scene scene = new Scene(root,645,780);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);

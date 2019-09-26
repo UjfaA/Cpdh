@@ -34,7 +34,8 @@ public class Cpdh {
 	private final List<Image> images;
 	private boolean isPartOfDataSet; // Infer from file name.  
 	private int position; // Position in group in data set. Derived from file name. If not part of data set then = -1;
-
+	private final File file;
+	
 	private static List<String> getGroupNames() { 
 
 		return List.of("apple", "bat", "beetle", "bell", "bird", "Bone", "bottle", "brick", "butterfly",
@@ -103,6 +104,7 @@ public class Cpdh {
 
 	public Cpdh(File file, int numOfPoints, boolean saveImages) {
 		
+		this.file = file;
 		ResultsContainer result = processFile(file, numOfPoints, saveImages);
 		this.histogram = result.histogram;
 		this.signature = toSignature(result.histogram);
@@ -128,6 +130,7 @@ public class Cpdh {
 		this.histogram 	= histogram;
 		this.images		= List.of();
 		this.signature 	= toSignature(histogram);
+		this.file		= null;
 	}
 
 	private ResultsContainer processFile(File file, int numOfPoints, boolean saveImages) {
@@ -157,7 +160,7 @@ public class Cpdh {
 		/* convert to binary */
 
 		Mat matBinary = new Mat(matGray.size(), CvType.CV_8UC1);
-		Imgproc.threshold(matGray, matBinary, 128, 255, Imgproc.THRESH_BINARY);
+		Imgproc.threshold(matGray, matBinary, 235, 255, Imgproc.THRESH_BINARY);
 		
 		/*  background check  */ 
 	
@@ -471,7 +474,7 @@ public class Cpdh {
 					emdScoreZero = true;
 			}
 		}
-		int take = 2;
+		int take = 1;
 		double score = 0.00;
 		while (take > 0) {
 			System.out.println(scores.peek() );
@@ -593,6 +596,10 @@ public class Cpdh {
 		return images;
 	}
 
+	File getFile() {
+		return file;
+	}
+	
 	String toString1Line() {
 		
 		StringBuilder output = new StringBuilder(75);
@@ -622,6 +629,7 @@ public class Cpdh {
 		
 		return sb.toString();
 	}
+
 
 	private class ResultsContainer {
 	

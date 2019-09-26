@@ -14,10 +14,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.RadioButton;
@@ -27,6 +33,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
@@ -34,6 +44,8 @@ import javafx.stage.FileChooser;
 
 public class CpdhController {
 	
+	@FXML
+	private BorderPane borderPane;
 	@FXML
 	private Button btnAutoCompare;
 	@FXML
@@ -47,11 +59,13 @@ public class CpdhController {
 	@FXML
 	private RadioButton rBtnOriginal, rBtnBinary, rBtnContour, rBtnPoints, rBtnCircle, rBtnRegions;
 	@FXML
-	private ToggleGroup rbToggleGroup, meniToggleGroup;
+	private ToggleGroup rbToggleGroup, menuToggleGroup;
 	@FXML
 	private Label label;
 	@FXML
 	private ProgressBar progresBar;
+
+	private HostServices hostServices; 
 	
 	private final FileChooser fileChooser = new FileChooser();
 	private final DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -61,41 +75,89 @@ public class CpdhController {
 	private Cpdh cpdh;
 	private List<List<Cpdh>> selectedDataSet;
 	private Map< Integer, List<List<Cpdh>> > dataSets;
-	
+
 	@FXML
 	private void initialize() {
-		
+
+//		TODO: revisit keyboard events handling
+		/* configure handling of key pressed events */
+		borderPane.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+			switch (event.getCode()) {
+			
+			case DIGIT1:
+			case NUMPAD1:
+				rBtnOriginal.setSelected(true);
+				event.consume();
+				break;
+			case DIGIT2:
+			case NUMPAD2:
+				rBtnBinary.setSelected(true);
+				event.consume();
+				break;
+			case DIGIT3:
+			case NUMPAD3:
+				rBtnContour.setSelected(true);
+				event.consume();
+				break;
+			case DIGIT4:
+			case NUMPAD4:
+				rBtnPoints.setSelected(true);
+				event.consume();
+				break;
+			case DIGIT5:
+			case NUMPAD5:
+				rBtnCircle.setSelected(true);
+				event.consume();
+				break;
+			case DIGIT6:
+			case NUMPAD6:
+				rBtnRegions.setSelected(true);
+				event.consume();
+				break;
+			default:
+				break;
+			}
+		});
+
 		/* configure selection of numOfPoints */
 		radMeni50.setUserData(Integer.valueOf(50));
 		radMeni100.setUserData(Integer.valueOf(100));
 		radMeni250.setUserData(Integer.valueOf(250));
 		
 		/* configure meniToggleGroup */
-		meniToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
+		menuToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
 			if (dataSets != null) {
 				Integer dataSetKey = (Integer) newValue.getUserData();
 				selectedDataSet = dataSets.get(dataSetKey);
 			}
 			// clear previously loaded cpdh and associated images;
-			cpdh = null;
-			textField.clear();
-			textArea.clear();
-			configRadBtn(List.of());
+			
+//			cpdh = null;
+//			textField.clear();
+//			textArea.clear();
+//			configRadBtn(List.of());
+	
+			/* reconstruct cpdh with new number of points */
+			if (cpdh != null) {
+				File file = cpdh.getFile();
+				if (file != null && file.isFile())
+					processFile(file);
+			}
 		});
 		
 		/* configure rbToggleGroup */
 		rbToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
-
+			((Node) newValue).requestFocus();
 			Image image = (Image) newValue.getUserData();
 			imageView.setImage(image);
 		});
-		
+
 		/* try to load data sets from default location */
 		try {
 			dataSets = new HashMap<>();
 			loadDS(new File("pictures\\MPEG-7 shape"), dataSets);	
 			label.setText("Data sets successfully loaded");
-			Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
+			Integer dataSetKey = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
 			selectedDataSet = dataSets.get(dataSetKey);
 		} catch (Exception e) {
 			label.setText("Unable to load data sets at start.");
@@ -107,7 +169,7 @@ public class CpdhController {
 		btnAutoCompare.setVisible(false);
 		btnAutoCompare.setManaged(false);
 	}
-	
+
 	@FXML
 	private void handleBtnLoadImage() {
 		handleItemLoadImage();
@@ -125,36 +187,38 @@ public class CpdhController {
 		fileChooser.setTitle("Choose image file to open.");
 		fileChooser.getExtensionFilters().clear();
 		fileChooser.getExtensionFilters().add(
-				new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jepg", "*.png", "*.bmp"));
+				new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jepg", "*.bmp"));
 		fileChooser.setInitialDirectory(new File(".\\pictures"));
 		final File file = fileChooser.showOpenDialog(imageView.getScene().getWindow());
-
-		if (file != null) {
-
-			Task<Cpdh> processFile = new Task<Cpdh>() {
-
-				@Override
-				protected Cpdh call() throws Exception {
-					int numOfPoints = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
-					return new Cpdh(file, numOfPoints);
-				}
-			};
-			processFile.setOnSucceeded(event -> {
-				try {
-					this.cpdh = processFile.get();
-					configRadBtn(cpdh.getImages());
-					textField.setText("");
-					textArea.setText(cpdh.toString());
-					//						TODO Enable save meni
-				} catch (InterruptedException | ExecutionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			});
-			executorService.execute(processFile);
-		}
+		if (file != null) 
+			processFile(file);
 	}
+	
+	private void processFile(File file) {
 
+		Task<Cpdh> processFile = new Task<Cpdh>() {
+
+			@Override
+			protected Cpdh call() throws Exception {
+				int numOfPoints = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
+				return new Cpdh(file, numOfPoints);
+			}
+		};
+		processFile.setOnSucceeded(event -> {
+			try {
+				this.cpdh = processFile.get();
+				configRadBtn(cpdh.getImages());
+				textField.setText("");
+				textArea.setText(cpdh.toString());
+				//						TODO Enable save meni
+			} catch (InterruptedException | ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+		executorService.execute(processFile);
+	}
+	
 	@FXML
 	private void handleItemRetrieveShape() {
 
@@ -178,6 +242,7 @@ public class CpdhController {
 		};
 		retrieveShape.setOnSucceeded(event -> {
 			try {
+				textField.setAlignment(Pos.BOTTOM_CENTER);;
 				textField.setText("Best match : " + retrieveShape.get());
 			} catch (InterruptedException | ExecutionException e) {
 				// TODO Auto-generated catch block
@@ -205,7 +270,7 @@ public class CpdhController {
 				label.setText("Canceled. " +e.getMessage());
 				e.printStackTrace();
 			}
-			Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
+			Integer dataSetKey = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
 			selectedDataSet = dataSets.get(dataSetKey);
 		}
 	}
@@ -223,7 +288,7 @@ public class CpdhController {
 			constructAllDataSets.setOnSucceeded(event -> {
 				try {
 					dataSets = constructAllDataSets.get();
-					Integer dataSetKey = (Integer) meniToggleGroup.getSelectedToggle().getUserData();
+					Integer dataSetKey = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
 					selectedDataSet = dataSets.get(dataSetKey);
 					writeDStoFile(dataSets.get(50), dir, 50);
 					writeDStoFile(dataSets.get(100), dir, 100);
@@ -253,7 +318,6 @@ public class CpdhController {
 		}
 	}
 	
-//	TODO: check results of listFiles() for wrong results;
 	private void loadDS(File dir, Map< Integer,List<List<Cpdh>> > dataSets) throws Exception {
 		
 		/* Simple solution for 3 files with exact file name */
@@ -345,18 +409,45 @@ public class CpdhController {
 				rBtn.setUserData(null);
 			});
 		}
-		if (rbToggleGroup.getSelectedToggle() != rBtnOriginal) // same RadioButton instance.	
-			rbToggleGroup.selectToggle(rBtnOriginal);
-		else {
-			Image image = (Image) rBtnOriginal.getUserData();
-			imageView.setImage(image);
-		}
-		rBtnOriginal.requestFocus();	
+		imageView.setImage( (Image) rbToggleGroup.getSelectedToggle().getUserData());
+//		if (rbToggleGroup.getSelectedToggle() != rBtnOriginal) // same RadioButton instance.
+//			rbToggleGroup.selectToggle(rBtnOriginal);
+//		else {
+//			Image image = (Image) rBtnOriginal.getUserData();
+//			imageView.setImage(image);
+//		}
+//		rBtnOriginal.requestFocus();	
 	}
 	
 	@FXML
 	private void handleItemQuit() {
 		Platform.exit();
+	}
+	
+	@FXML
+	private void handleItemAbout() {
+		
+		Alert info = new Alert(Alert.AlertType.INFORMATION);
+		info.setTitle("About");
+		info.setHeaderText("Cpdh");
+		StringBuilder contentBuilder = new StringBuilder("This app showcases CPDH descriptor.")
+				.append("\nIt is intended to be used with MPEG-7 shape data set.")
+				.append("\n\nTo learn more about CPDH descriptor, please visit:");
+		Label about = new Label(contentBuilder.toString());
+		Hyperlink link = new Hyperlink("https://www.researchgate.net/publication/220611301"
+				+ "_A_novel_contour_descriptor_for_2D_shape_matching_and_its_application_to_image_retrieval");
+		link.setOnAction(e -> {
+			 hostServices.showDocument( link.getText());
+		});
+		Label author = new Label("\n\n Author:\t\t Aleksandar Ujfaluši\n\t\t\tAlexUjfa@outlook.com");
+		VBox contentBox = new VBox(about, link, author);
+		info.getDialogPane().setContent(contentBox);
+		info.setOnShown(e -> {
+			info.getDialogPane().setMinWidth(800);
+			info.getDialogPane().getScene().getWindow().sizeToScene();
+			info.setResizable(false);
+		});
+		info.showAndWait();
 	}
 	
 	void shutDown() {
@@ -369,6 +460,10 @@ public class CpdhController {
 			System.out.println("Failed to shut down.");
 			e.printStackTrace();
 		}
+	}
+
+	public void setHostServices(HostServices hostServices) {
+		this.hostServices = hostServices;
 	}
 
 }

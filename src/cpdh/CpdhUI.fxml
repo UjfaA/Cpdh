@@ -37,16 +37,16 @@
               <items>
                   <RadioMenuItem fx:id="radMeni50" mnemonicParsing="false" text="50 Points">
                      <toggleGroup>
-                        <ToggleGroup fx:id="meniToggleGroup" />
+                        <ToggleGroup fx:id="menuToggleGroup" />
                      </toggleGroup>
                   </RadioMenuItem>
-                  <RadioMenuItem fx:id="radMeni100" mnemonicParsing="false" text="100 Points" toggleGroup="$meniToggleGroup" />
-                  <RadioMenuItem fx:id="radMeni250" mnemonicParsing="false" selected="true" text="250 Points" toggleGroup="$meniToggleGroup" />
+                  <RadioMenuItem fx:id="radMeni100" mnemonicParsing="false" text="100 Points" toggleGroup="$menuToggleGroup" />
+                  <RadioMenuItem fx:id="radMeni250" mnemonicParsing="false" selected="true" text="250 Points" toggleGroup="$menuToggleGroup" />
               </items>
             </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
-              <MenuItem mnemonicParsing="false" text="About" />
+              <MenuItem mnemonicParsing="false" onAction="#handleItemAbout" text="About" />
             </items>
           </Menu>
         </menus>
@@ -87,7 +87,7 @@
                         <Insets />
                      </VBox.margin>
                   </FlowPane>
-                  <TextArea fx:id="textArea" editable="false" focusTraversable="false" minHeight="77.0" minWidth="505.0" prefColumnCount="8" prefRowCount="3">
+                  <TextArea fx:id="textArea" editable="false" focusTraversable="false" minHeight="77.0" minWidth="505.0" prefColumnCount="8" prefRowCount="3" promptText="CPDH for loaded image will be shown here.">
                      <VBox.margin>
                         <Insets bottom="5.0" left="51.0" right="51.0" top="20.0" />
                      </VBox.margin>
@@ -95,7 +95,7 @@
                         <Font name="Monospaced Bold" size="14.0" />
                      </font>
                   </TextArea>
-                  <TextField fx:id="textField" alignment="BOTTOM_CENTER" editable="false" focusTraversable="false">
+                  <TextField fx:id="textField" alignment="BOTTOM_LEFT" editable="false" focusTraversable="false" promptText="Result of matching with data set will be shown here.">
                      <VBox.margin>
                         <Insets bottom="5.0" left="51.0" right="51.0" top="7.0" />
                      </VBox.margin>
