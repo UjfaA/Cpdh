@@ -1,5 +1,5 @@
 package cpdh;
-	
+
 import org.opencv.core.Core;
 
 import javafx.application.Application;
@@ -18,14 +18,14 @@ public class Main extends Application {
 
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("CpdhUI.fxml"));
-//			BorderPane root = (BorderPane)FXMLLoader.load(getClass().getResource("CpdhUI.fxml"));
 			BorderPane root = (BorderPane) loader.load();
 			controler = (CpdhController) loader.getController();
 			controler.setHostServices(getHostServices());
-			Scene scene = new Scene(root,645,780);
+			Scene scene = new Scene(root,950,680);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
-			primaryStage.setResizable(false);
+			primaryStage.setMinWidth(965);
+			primaryStage.setMinHeight(720);
 			primaryStage.setTitle("CPDH demo");
 			primaryStage.show();
 		} catch(Exception e) {

@@ -9,6 +9,7 @@
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.RadioMenuItem?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleGroup?>
@@ -19,7 +20,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="borderPane" focusTraversable="true" maxHeight="800.0" maxWidth="800.0" minHeight="400.0" minWidth="200.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cpdh.CpdhController">
+<BorderPane fx:id="borderPane" focusTraversable="true" maxHeight="680.0" maxWidth="950.0" minHeight="680.0" minWidth="950.0" prefHeight="680.0" prefWidth="950.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cpdh.CpdhController">
    <top>
       <MenuBar fx:id="menuBar" BorderPane.alignment="TOP_LEFT">
         <menus>
@@ -29,7 +30,7 @@
                   <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Save images" />
                   <MenuItem mnemonicParsing="false" onAction="#handleItemRetrieveShape" text="Retrieve shape" />
                   <MenuItem mnemonicParsing="false" onAction="#handleItemloadDS" text="Load data set" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleItemConstructDS" text="Construct data sets" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleItemConstructDS" text="Construct data set" />
               <MenuItem fx:id="exitItem" mnemonicParsing="false" onAction="#handleItemQuit" text="Quit" />
             </items>
           </Menu>
@@ -53,73 +54,85 @@
       </MenuBar>
    </top>
    <center>
-      <VBox fx:id="vBoxCenter" alignment="CENTER" spacing="5.0" BorderPane.alignment="TOP_CENTER">
+      <VBox fx:id="vBoxCenter" alignment="CENTER" BorderPane.alignment="TOP_CENTER">
          <children>
-            <VBox alignment="CENTER" maxHeight="495.0" maxWidth="600.0" minHeight="495.0" minWidth="600.0" prefHeight="495.0" prefWidth="600.0">
+            <ImageView fx:id="imageView" fitHeight="475.0" fitWidth="920.0" pickOnBounds="true" preserveRatio="true">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </ImageView>
+         </children>
+         <BorderPane.margin>
+            <Insets />
+         </BorderPane.margin>
+      </VBox>
+   </center>
+   <bottom>
+      <VBox BorderPane.alignment="BOTTOM_CENTER">
+         <children>
+            <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" hgap="15.0" vgap="5.0">
                <children>
-                  <ImageView fx:id="imageView" fitHeight="475.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true">
-                     <VBox.margin>
-                        <Insets bottom="5.0" left="4.0" right="4.0" top="4.0" />
-                     </VBox.margin>
-                  </ImageView>
+                  <Label text="Show: " />
+                  <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" selected="true" text="Original">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="rbToggleGroup" />
+                     </toggleGroup>
+                  </RadioButton>
+                  <RadioButton fx:id="rBtnBinary" mnemonicParsing="false" text="Binarny" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnContour" mnemonicParsing="false" text="Contour" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnPoints" mnemonicParsing="false" text="Points" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnCircle" mnemonicParsing="false" text="Circle" toggleGroup="$rbToggleGroup" />
+                  <RadioButton fx:id="rBtnRegions" mnemonicParsing="false" text="Regions" toggleGroup="$rbToggleGroup" />
                </children>
                <VBox.margin>
-                  <Insets bottom="5.0" left="4.0" right="4.0" top="4.0" />
+                  <Insets bottom="7.0" />
                </VBox.margin>
-            </VBox>
-            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
+            </FlowPane>
+            <HBox alignment="BOTTOM_CENTER">
                <children>
-                  <FlowPane alignment="TOP_CENTER" columnHalignment="CENTER" hgap="15.0" vgap="5.0">
+                  <VBox alignment="BOTTOM_CENTER" maxWidth="637.0" prefHeight="90.0">
                      <children>
-                        <Label text="Show: " />
-                        <RadioButton fx:id="rBtnOriginal" mnemonicParsing="false" selected="true" text="Original">
-                           <toggleGroup>
-                              <ToggleGroup fx:id="rbToggleGroup" />
-                           </toggleGroup>
-                        </RadioButton>
-                        <RadioButton fx:id="rBtnBinary" mnemonicParsing="false" text="Binarny" toggleGroup="$rbToggleGroup" />
-                        <RadioButton fx:id="rBtnContour" mnemonicParsing="false" text="Contour" toggleGroup="$rbToggleGroup" />
-                        <RadioButton fx:id="rBtnPoints" mnemonicParsing="false" text="Points" toggleGroup="$rbToggleGroup" />
-                        <RadioButton fx:id="rBtnCircle" mnemonicParsing="false" text="Circle" toggleGroup="$rbToggleGroup" />
-                        <RadioButton fx:id="rBtnRegions" mnemonicParsing="false" text="Regions" toggleGroup="$rbToggleGroup" />
+                        <TextArea fx:id="textArea" editable="false" focusTraversable="false" minHeight="80.0" minWidth="535.0" prefRowCount="3" promptText="CPDH for loaded image will be shown here.">
+                           <VBox.margin>
+                              <Insets bottom="5.0" left="7.0" right="7.0" top="5.0" />
+                           </VBox.margin>
+                           <font>
+                              <Font name="Monospaced Bold" size="14.0" />
+                           </font>
+                        </TextArea>
                      </children>
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin>
-                  </FlowPane>
-                  <TextArea fx:id="textArea" editable="false" focusTraversable="false" minHeight="77.0" minWidth="505.0" prefColumnCount="8" prefRowCount="3" promptText="CPDH for loaded image will be shown here.">
-                     <VBox.margin>
-                        <Insets bottom="5.0" left="51.0" right="51.0" top="20.0" />
-                     </VBox.margin>
-                     <font>
-                        <Font name="Monospaced Bold" size="14.0" />
-                     </font>
-                  </TextArea>
-                  <TextField fx:id="textField" alignment="BOTTOM_LEFT" editable="false" focusTraversable="false" promptText="Result of matching with data set will be shown here.">
-                     <VBox.margin>
-                        <Insets bottom="5.0" left="51.0" right="51.0" top="7.0" />
-                     </VBox.margin>
-                     <font>
-                        <Font name="Monospaced Bold" size="14.0" />
-                     </font>
-                  </TextField>
+                  </VBox>
+                  <VBox alignment="BOTTOM_RIGHT" prefHeight="90.0" prefWidth="350.0" spacing="18.0">
+                     <children>
+                        <TextField fx:id="textField" alignment="CENTER" editable="false" focusTraversable="false" promptText="Result of matching with data set">
+                           <VBox.margin>
+                              <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+                           </VBox.margin>
+                           <font>
+                              <Font name="Monospaced Bold" size="14.0" />
+                           </font>
+                        </TextField>
+                        <HBox alignment="CENTER" spacing="10.0">
+                           <children>
+                              <Button fx:id="btnAutoCompare" mnemonicParsing="false" text="Auto compare test" textAlignment="CENTER" visible="false" />
+                              <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#handleBtnLoadImage" text="Load Image" textAlignment="CENTER" />
+                              <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#handleBtnRetrieveShape" text="Retrieve shape" textAlignment="CENTER" />
+                           </children>
+                           <VBox.margin>
+                              <Insets bottom="7.0" left="7.0" right="7.0" />
+                           </VBox.margin>
+                        </HBox>
+                     </children>
+                  </VBox>
                </children>
                <VBox.margin>
-                  <Insets top="5.0" />
+                  <Insets bottom="5.0" top="5.0" />
                </VBox.margin>
-            </VBox>
-            <HBox alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" prefHeight="50.0" spacing="10.0">
-               <children>
-                  <Button fx:id="btnAutoCompare" mnemonicParsing="false" text="Auto compare test" textAlignment="CENTER" visible="false" />
-                  <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#handleBtnLoadImage" text="Load Image" textAlignment="CENTER" />
-                  <Button minWidth="-Infinity" mnemonicParsing="false" onAction="#handleBtnRetrieveShape" text="Retrieve shape" textAlignment="CENTER" />
-               </children>
-               <padding>
-                  <Insets right="15.0" />
-               </padding>
             </HBox>
-            <HBox alignment="BOTTOM_LEFT" prefHeight="18.0" spacing="15.0">
+            <Separator prefWidth="200.0" />
+            <HBox alignment="CENTER_LEFT" fillHeight="false" spacing="7.0">
                <children>
+                  <ProgressBar fx:id="progresBar" disable="true" prefWidth="150.0" progress="0.0" visible="false" />
                   <Label fx:id="label" prefHeight="20.0">
                      <font>
                         <Font size="14.0" />
@@ -128,16 +141,15 @@
                         <Insets left="3.0" />
                      </HBox.margin>
                   </Label>
-                  <ProgressBar fx:id="progresBar" disable="true" prefWidth="150.0" progress="0.0" visible="false" />
                </children>
-               <opaqueInsets>
-                  <Insets />
-               </opaqueInsets>
+               <padding>
+                  <Insets left="5.0" />
+               </padding>
             </HBox>
          </children>
+         <BorderPane.margin>
+            <Insets top="3.0" />
+         </BorderPane.margin>
       </VBox>
-   </center>
-   <padding>
-      <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-   </padding>
+   </bottom>
 </BorderPane>

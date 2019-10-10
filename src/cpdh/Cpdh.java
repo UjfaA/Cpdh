@@ -5,6 +5,7 @@ import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -28,16 +29,46 @@ public class Cpdh {
 	private static final List<String> GROUP_NAMES = getGroupNames(); // List of names of groups from MPEG-7 shape data set.
 	private static final Mat COST_MATRIX = generateCostMat(36, 3);
 	
-//	private final int numOfPoints;
+	private final int numOfPoints;
 	private final int[] histogram;
 	private final Mat signature;
 	private final List<Image> images;
-	private boolean isPartOfDataSet; // Infer from file name.  
-	private int position; // Position in group in data set. Derived from file name. If not part of data set then = -1;
-	private final File file;
+	private final String filename;
 	
-	private static List<String> getGroupNames() { 
+	
+	public Cpdh(File file, int numOfPoints) {
+		this(file, numOfPoints, true);
+	}
 
+	public Cpdh(File file, int numOfPoints, boolean saveImages) {
+				
+		this.filename	 = file.getName();
+		this.numOfPoints = numOfPoints;
+		ResultsContainer result = processFile(file, numOfPoints, saveImages);
+		this.histogram	 = result.histogram;
+		this.signature	 = toSignature(result.histogram);
+		this.images		 = result.getImages();
+	}
+	
+	public Cpdh (String filename, String data) {
+			
+		int[] histogram = new int [36];  // 3 x 12 regions
+		String[] value = data.split("\\s+");
+		
+		int numOfPoints = 0;
+		for (int bin = 0; bin < histogram.length; bin++) {
+			histogram[bin] = Integer.parseInt(value[bin]);
+			numOfPoints += histogram[bin];
+		}
+		this.images		 = List.of();
+		this.filename	 = filename;
+		this.histogram	 = histogram;
+		this.signature	 = toSignature(histogram);
+		this.numOfPoints = numOfPoints;  
+	}
+
+	private static List<String> getGroupNames() { 
+	
 		return List.of("apple", "bat", "beetle", "bell", "bird", "Bone", "bottle", "brick", "butterfly",
 				"camel", "car", "carriage", "cattle", "cellular_phone", "chicken", "children", "chopper",
 				"classic", "Comma", "crown", "cup", "deer", "device0", "device1", "device2", "device3",
@@ -47,7 +78,7 @@ public class Cpdh {
 				"octopus", "pencil", "personal_car", "pocket", "rat", "ray", "sea_snake", "shoe", "spoon",
 				"spring", "stef", "teddy", "tree", "truck", "turtle", "watch");
 	}
-	
+
 	static private Mat generateCostMat( int histLength , int numOfCircles) {
 	
 		int elementsInCircle = histLength / numOfCircles;
@@ -61,28 +92,24 @@ public class Cpdh {
 		Rect roi = new Rect(0, 0, elementsInCircle, elementsInCircle) ;
 		
 		for (int row = 0; row < numOfCircles; row++) {
-			for (int col = 0; col < numOfCircles; col++) {
-				
+			for (int col = 0; col < numOfCircles; col++) {		
 				roi.x = col * elementsInCircle;
 				roi.y = row * elementsInCircle;
 				blocks[row][col] = DIST_COST.submat(roi);
 			}
 		}
-		
+	
 		// calculate 1st block
 		Mat block00 = blocks[0][0];
-		//float [] distanceArray1st = new float[blok00.rows() * blok00.cols()];
-		float [][] distanceBlock = new float [block00.rows()] [block00.cols()];
+		float [][] distance = new float [block00.rows()] [block00.cols()];
 		
 		// first block
 		for (int row = 0; row < block00.rows(); row++) {
 			for (int col = 0; col < block00.cols(); col++) {
-	
-				//distanceArray1st[row * block00.cols() + (row + col) % elementsInCircle] = maxDist1 - Math.abs(maxDist1 - col);
-				
-				distanceBlock [row] [(row + col) % block00.cols()] = maxDist1 - Math.abs(maxDist1 - col);
+				int colShift = (row + col) % block00.cols();
+				distance[row][colShift] = maxDist1 - Math.abs(maxDist1 - col);
 			}
-			block00.put(row, 0, distanceBlock [row] );
+			block00.put(row, 0, distance [row] );
 		}
 		
 		// fill in rest of the blocks
@@ -97,40 +124,14 @@ public class Cpdh {
 		return DIST_COST;
 	}
 
-	public Cpdh(File file, int numOfPoints) {
-
-		this(file, numOfPoints, true);
-	}
-
-	public Cpdh(File file, int numOfPoints, boolean saveImages) {
+	public static Float emd(Cpdh cpdh, Cpdh otherCpdh) {
 		
-		this.file = file;
-		ResultsContainer result = processFile(file, numOfPoints, saveImages);
-		this.histogram = result.histogram;
-		this.signature = toSignature(result.histogram);
-		this.images = result.getImages();
-		try {
-			this.isPartOfDataSet = checkIfPartOfDataSet(file);
-			this.position = isPartOfDataSet ? readPosition(file)
-											: -1;
-		} catch (Exception e) {
-			this.isPartOfDataSet = false;
-			this.position = -1;
+		List<Float> emdScores = new ArrayList<>();
+		for ( Mat signature : cpdh.getSignatureVariations()) {
+			float emd = Imgproc.EMD(signature, otherCpdh.signature, Imgproc.DIST_USER, COST_MATRIX);
+			emdScores.add(emd);
 		}
-	}
-	
-	public Cpdh (String s) {
-		
-		int[] histogram = new int [36];  // 3 x 12 regions
-		String[] value = s.split("\\s+");
-		
-		for (int bin = 0; bin < histogram.length; bin++) {
-			histogram[bin] = Integer.parseInt(value[bin]);
-		}
-		this.histogram 	= histogram;
-		this.images		= List.of();
-		this.signature 	= toSignature(histogram);
-		this.file		= null;
+		return Collections.min(emdScores);
 	}
 
 	private ResultsContainer processFile(File file, int numOfPoints, boolean saveImages) {
@@ -145,7 +146,7 @@ public class Cpdh {
 			return result;
 		}
 		else
-			throw new IllegalArgumentException("Unable to read file: " + file.getName());
+			throw new IllegalArgumentException("Unable to find or to read file: " + file.getName());
 	}
 
 	private ResultsContainer processImage(Mat matSrc, int numOfPoints, boolean saveImages) {
@@ -160,7 +161,7 @@ public class Cpdh {
 		/* convert to binary */
 
 		Mat matBinary = new Mat(matGray.size(), CvType.CV_8UC1);
-		Imgproc.threshold(matGray, matBinary, 235, 255, Imgproc.THRESH_BINARY);
+		Imgproc.threshold(matGray, matBinary, 210, 255, Imgproc.THRESH_BINARY);
 		
 		/*  background check  */ 
 	
@@ -435,25 +436,6 @@ public class Cpdh {
 		return polarCoordinates;
 	}
 
-	private boolean checkIfPartOfDataSet(File file) {
-		
-		String name = file.getName();
-		int indexDash = name.lastIndexOf('-');
-		String group = name.substring(0, indexDash);
-		if (GROUP_NAMES.contains(group))
-			return true;
-		else
-			return false;
-	}
-
-	private int readPosition(File file) {
-		
-		String name = file.getName();
-		int indexDash = name.lastIndexOf('-');
-		int indexDot = name.lastIndexOf('.');
-		return Integer.parseInt(name, indexDash + 1, indexDot, 10) - 1; // -1 because zero indexing
-	}
-
 	private double getGroupScore(Mat[] testSet, List<Cpdh> group) {
 		
 		int capacity = testSet.length * group.size();
@@ -463,8 +445,8 @@ public class Cpdh {
 		
 		for (int position = 0; position < group.size(); position++) {
 			
-			if (this.isPartOfDataSet && this.position == position)
-				continue;
+//			if (this.isPartOfDataSet && this.position == position)
+//				continue;
 			
 			for (int variation = 0; variation < testSet.length; variation++) {
 				
@@ -596,8 +578,12 @@ public class Cpdh {
 		return images;
 	}
 
-	File getFile() {
-		return file;
+	String getFilename() {
+		return filename;
+	}
+	
+	int getNumOfPoints() {
+		return numOfPoints;
 	}
 	
 	String toString1Line() {
@@ -629,7 +615,32 @@ public class Cpdh {
 		
 		return sb.toString();
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		
+		if (other == this)
+			return true;
+		if (other == null || other.getClass() != this.getClass())
+			return false;
 
+		Cpdh otherCpdh = (Cpdh) other;
+		if ( ! Arrays.equals(otherCpdh.histogram, this.histogram))
+			return false;
+		if ( ! otherCpdh.filename.equals(this.filename))
+			return false;
+		
+		return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		
+		int ah = Arrays.hashCode(histogram);
+		int sh = filename.hashCode();
+		int hashCode = ah ^ sh;
+		return hashCode;
+	}
 
 	private class ResultsContainer {
 	
