@@ -26,7 +26,6 @@ import javafx.scene.image.Image;
 
 public class Cpdh {
 	
-	private static final List<String> GROUP_NAMES = getGroupNames(); // List of names of groups from MPEG-7 shape data set.
 	private static final Mat COST_MATRIX = generateCostMat(36, 3);
 	
 	private final int numOfPoints;
@@ -34,7 +33,8 @@ public class Cpdh {
 	private final Mat signature;
 	private final List<Image> images;
 	private final String filename;
-	
+
+	private final Mat[] signatureVariations = new Mat[24];
 	
 	public Cpdh(File file, int numOfPoints) {
 		this(file, numOfPoints, true);
@@ -67,16 +67,14 @@ public class Cpdh {
 		this.numOfPoints = numOfPoints;  
 	}
 
-	private static List<String> getGroupNames() { 
-	
-		return List.of("apple", "bat", "beetle", "bell", "bird", "Bone", "bottle", "brick", "butterfly",
-				"camel", "car", "carriage", "cattle", "cellular_phone", "chicken", "children", "chopper",
-				"classic", "Comma", "crown", "cup", "deer", "device0", "device1", "device2", "device3",
-				"device4", "device5", "device6", "device7", "device8", "device9", "dog", "elephant", "face",
-				"fish", "flatfish", "fly", "fork", "fountain", "frog", "Glas", "guitar", "hammer", "hat",
-				"HCircle", "Heart", "horse", "horseshoe", "jar", "key", "lizzard", "lmfish", "Misk",
-				"octopus", "pencil", "personal_car", "pocket", "rat", "ray", "sea_snake", "shoe", "spoon",
-				"spring", "stef", "teddy", "tree", "truck", "turtle", "watch");
+	public static Float emd(Cpdh cpdh, Cpdh otherCpdh) {
+		
+		List<Float> emdScores = new ArrayList<>();
+		for ( Mat signature : cpdh.getSignatureVariations()) {
+			float emd = Imgproc.EMD(signature, otherCpdh.signature, Imgproc.DIST_USER, COST_MATRIX);
+			emdScores.add(emd);
+		}
+		return Collections.min(emdScores);
 	}
 
 	static private Mat generateCostMat( int histLength , int numOfCircles) {
@@ -99,11 +97,11 @@ public class Cpdh {
 			}
 		}
 	
-		// calculate 1st block
+		// first block
 		Mat block00 = blocks[0][0];
 		float [][] distance = new float [block00.rows()] [block00.cols()];
 		
-		// first block
+		// calculate the 1st block
 		for (int row = 0; row < block00.rows(); row++) {
 			for (int col = 0; col < block00.cols(); col++) {
 				int colShift = (row + col) % block00.cols();
@@ -122,16 +120,6 @@ public class Cpdh {
 			}
 		}
 		return DIST_COST;
-	}
-
-	public static Float emd(Cpdh cpdh, Cpdh otherCpdh) {
-		
-		List<Float> emdScores = new ArrayList<>();
-		for ( Mat signature : cpdh.getSignatureVariations()) {
-			float emd = Imgproc.EMD(signature, otherCpdh.signature, Imgproc.DIST_USER, COST_MATRIX);
-			emdScores.add(emd);
-		}
-		return Collections.min(emdScores);
 	}
 
 	private ResultsContainer processFile(File file, int numOfPoints, boolean saveImages) {
@@ -436,41 +424,10 @@ public class Cpdh {
 		return polarCoordinates;
 	}
 
-	private double getGroupScore(Mat[] testSet, List<Cpdh> group) {
-		
-		int capacity = testSet.length * group.size();
-		PriorityQueue<Float> scores = new PriorityQueue<Float>(capacity);
-		
-		boolean emdScoreZero = false; // flag is set when there is perfect match
-		
-		for (int position = 0; position < group.size(); position++) {
-			
-//			if (this.isPartOfDataSet && this.position == position)
-//				continue;
-			
-			for (int variation = 0; variation < testSet.length; variation++) {
-				
-				Float emd = Imgproc.EMD(testSet[variation], group.get(position).signature, Imgproc.DIST_USER, COST_MATRIX);
-				scores.add(emd);
-				if (emd == 0.0f)
-					emdScoreZero = true;
-			}
-		}
-		int take = 1;
-		double score = 0.00;
-		while (take > 0) {
-			System.out.println(scores.peek() );
-			score += scores.remove();
-			take--;
-		}
-		
-		if (emdScoreZero)
-			System.out.println("\nWarning: EMD score = 0.0\n");
-			
-		return score;
-	}
-
 	private Mat[] getSignatureVariations() {
+		
+		if (signatureVariations[0] != null)
+				return signatureVariations;
 		
 		int[][] histogram2d = to2D(histogram);
 		
@@ -480,12 +437,10 @@ public class Cpdh {
 		variations.addAll(getRotations(mirrored));		
 		
 		/* Conversion to signature */
-		Mat[] signatures = new Mat[variations.size()];
-		for (int i = 0; i < variations.size(); i++) {
-			
-			signatures[i] = toSignature( to1D(variations.get(i)));
+		for (int i = 0; i < variations.size(); i++) {	
+			signatureVariations[i] = toSignature( to1D(variations.get(i)));
 		}
-		return signatures;
+		return signatureVariations;
 	}
 
 	private int[][] getMirored(int[][] histogram2d) {
@@ -553,25 +508,6 @@ public class Cpdh {
 			}
 		}
 		return histogram2D;
-	}
-
-	String retrieveShape(List<List<Cpdh>> dataSet) {
-		
-		int groupMatched = 0;
-		double score = Double.MAX_VALUE , newScore = Double.MAX_VALUE;
-		Mat[] testSet = this.getSignatureVariations();
-		
-		/* for each group */
-		for (int i = 0; i < dataSet.size(); i++) {
-			
-			newScore = getGroupScore(testSet, dataSet.get(i));
-			if (newScore < score) {
-				
-				score = newScore;
-				groupMatched = i;
-			}
-		}
-		return GROUP_NAMES.get(groupMatched);
 	}
 
 	List<Image> getImages() {

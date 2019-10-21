@@ -26,7 +26,7 @@ public class Main extends Application {
 			primaryStage.setScene(scene);
 			primaryStage.setMinWidth(965);
 			primaryStage.setMinHeight(720);
-			primaryStage.setTitle("CPDH demo");
+			primaryStage.setTitle("CPDH App");
 			primaryStage.show();
 		} catch(Exception e) {
 			e.printStackTrace();

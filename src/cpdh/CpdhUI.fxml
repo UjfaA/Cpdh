@@ -10,6 +10,7 @@
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.RadioMenuItem?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleGroup?>
@@ -22,19 +23,16 @@
 
 <BorderPane fx:id="borderPane" focusTraversable="true" maxHeight="680.0" maxWidth="950.0" minHeight="680.0" minWidth="950.0" prefHeight="680.0" prefWidth="950.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cpdh.CpdhController">
    <top>
-      <MenuBar fx:id="menuBar" BorderPane.alignment="TOP_LEFT">
+      <MenuBar BorderPane.alignment="TOP_LEFT">
         <menus>
-          <Menu mnemonicParsing="false" text="Menu">
+          <Menu mnemonicParsing="false" text="File">
             <items>
-                  <MenuItem fx:id="loadImageItem" mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load image" />
-                  <MenuItem fx:id="saveItem" disable="true" mnemonicParsing="false" text="Save images" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleItemLoadImage" text="Load image" />
                   <MenuItem mnemonicParsing="false" onAction="#handleItemRetrieveShape" text="Retrieve shape" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleItemloadDS" text="Load data set" />
-                  <MenuItem mnemonicParsing="false" onAction="#handleItemConstructDS" text="Construct data set" />
-              <MenuItem fx:id="exitItem" mnemonicParsing="false" onAction="#handleItemQuit" text="Quit" />
+              <MenuItem mnemonicParsing="false" onAction="#handleItemQuit" text="Quit" />
             </items>
           </Menu>
-            <Menu mnemonicParsing="false" text="Setings">
+            <Menu mnemonicParsing="false" text="Settings">
               <items>
                   <RadioMenuItem fx:id="radMeni50" mnemonicParsing="false" text="50 Points">
                      <toggleGroup>
@@ -43,6 +41,8 @@
                   </RadioMenuItem>
                   <RadioMenuItem fx:id="radMeni100" mnemonicParsing="false" text="100 Points" toggleGroup="$menuToggleGroup" />
                   <RadioMenuItem fx:id="radMeni250" mnemonicParsing="false" selected="true" text="250 Points" toggleGroup="$menuToggleGroup" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleItemDataSetSettings" text="Data set settings ..." />
               </items>
             </Menu>
           <Menu mnemonicParsing="false" text="Help">
@@ -54,7 +54,7 @@
       </MenuBar>
    </top>
    <center>
-      <VBox fx:id="vBoxCenter" alignment="CENTER" BorderPane.alignment="TOP_CENTER">
+      <VBox alignment="CENTER" BorderPane.alignment="TOP_CENTER">
          <children>
             <ImageView fx:id="imageView" fitHeight="475.0" fitWidth="920.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>

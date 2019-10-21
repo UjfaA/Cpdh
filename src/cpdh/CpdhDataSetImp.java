@@ -125,7 +125,8 @@ public class CpdhDataSetImp implements CpdhDataSet {
 					StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.WRITE);
 		} catch (Exception e) {
-			System.out.println("Error writing to file" + file.getName());
+			System.out.println("Error writing to file: " + file.getName());
+			e.printStackTrace();
 		}
 	}
 	

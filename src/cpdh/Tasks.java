@@ -22,20 +22,35 @@ public class Tasks {
 	static Task< Map<Integer, CpdhDataSet>> newConstructDataSetsTask(File dir) {
 		
 		return new Task< Map<Integer, CpdhDataSet> >() {			
+
+			Map<Integer, CpdhDataSet> dataSets = new HashMap<>();
 			
 			@Override
 			protected Map<Integer, CpdhDataSet> call() {
+				
+				updateProgress(1, 10000);
 				
 				updateMessage("Getting files");
 				File[] files = dir.listFiles((directory, name) -> {
 					return name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".bmp");
 				});
-				updateMessage("Constructing data sets");
-				var dataSets = constructDataSetsFrom(files); 
+				if (files.length == 0) {
+					updateMessage("Canceled. No picture files with supported extensions found.");
+					cancel();
+					return dataSets;
+				}
+				updateMessage("Constructing the data set ...");
+				try {
+					constructDataSetsFrom(files);					
+				} catch (InterruptedException e) {
+					dataSets.clear();
+					updateMessage("Canceled.");
+					cancel();
+				}
 				return dataSets;
 			}
 
-			private Map< Integer, CpdhDataSet> constructDataSetsFrom(File[] files) {
+			private void constructDataSetsFrom(File[] files) throws InterruptedException {
 				
 				long progress = 0;
 				
@@ -44,6 +59,10 @@ public class Tasks {
 				CpdhDataSet dataSet250 = new CpdhDataSetImp(250);
 				
 				for (File file : files) {
+					
+					if (isCancelled() || Thread.interrupted()) {
+						throw new InterruptedException(); 
+					}
 					try {
 						dataSet50 .put(new Cpdh(file, 50, false));
 						dataSet100.put(new Cpdh(file, 100, false));
@@ -55,18 +74,15 @@ public class Tasks {
 						cancel();
 					}
 				}					
-				Map< Integer, CpdhDataSet> AllSets = new HashMap<>();
-				AllSets.put(50, dataSet50);
-				AllSets.put(100, dataSet100);
-				AllSets.put(250, dataSet250);
-				
-				return AllSets;
+				dataSets.put(50, dataSet50);
+				dataSets.put(100, dataSet100);
+				dataSets.put(250, dataSet250);
 			}
 		};
 	}
 
-	public static Task<String> newMatchCpdhToGroupTask(Cpdh cpdh, CpdhDataSet dataSet) {
-		
+	static Task<String> newMatchCpdhToGroupTask(Cpdh cpdh, CpdhDataSet dataSet) {
+	
 		return new Task<String>() {
 
 			@Override
