@@ -71,7 +71,7 @@ public class Cpdh {
 		
 		List<Float> emdScores = new ArrayList<>();
 		for ( Mat signature : cpdh.getSignatureVariations()) {
-			float emd = Imgproc.EMD(signature, otherCpdh.signature, Imgproc.DIST_USER, COST_MATRIX);
+			Float emd = Imgproc.EMD(signature, otherCpdh.signature, Imgproc.DIST_USER, COST_MATRIX);
 			emdScores.add(emd);
 		}
 		return Collections.min(emdScores);
@@ -139,7 +139,7 @@ public class Cpdh {
 
 	private ResultsContainer processImage(Mat matSrc, int numOfPoints, boolean saveImages) {
 		
-		/* Loaded image -> Grayscale -> Binary -> Sampling (-> Circle -> Regions)*/
+		/* Loaded image -> Grayscale -> Binary -> Contour -> Sampling (-> Circle -> Regions)*/
 
 		/* convert to grayscale */
 
@@ -149,7 +149,7 @@ public class Cpdh {
 		/* convert to binary */
 
 		Mat matBinary = new Mat(matGray.size(), CvType.CV_8UC1);
-		Imgproc.threshold(matGray, matBinary, 210, 255, Imgproc.THRESH_BINARY);
+		Imgproc.threshold(matGray, matBinary, 230, 255, Imgproc.THRESH_BINARY);
 		
 		/*  background check  */ 
 	
@@ -175,7 +175,7 @@ public class Cpdh {
 		Point center = new Point();
 		float[] radiusAsArray = new float[1]; //
 		Imgproc.minEnclosingCircle(matPoints2f, center, radiusAsArray);
-		float radius = radiusAsArray[0];
+		int radius = Double.valueOf(Math.ceil(radiusAsArray[0])).intValue(); // rounding up so every pixel is captured (drawCircle() uses int)
 		
 		/*Pack results */
 		
@@ -192,15 +192,14 @@ public class Cpdh {
 			Imgproc.drawContours(matContour, contours, -1 /*draw all*/, new Scalar(255, 255, 255));
 			
 			Mat matSampledPoints = Mat.zeros(matSrc.size(), CvType.CV_8UC1);
-			drawPoints(matSampledPoints, sampledPoints, 1);
+			drawPoints(matSampledPoints, sampledPoints);
 			
 			Mat matCircle = matSampledPoints.clone();
-//			int radiusInt = (int) Math.round(radius);
-			int radiusInt = (int) Math.round(Math.ceil(radius)); // rounding up so every pixel is captured (drawCircle() uses int)
-			Imgproc.circle(matCircle, center, radiusInt, new Scalar (255), 1);
+			int lineWide = (matCircle.rows() >= 2048)? 2: 1;
+			Imgproc.circle(matCircle, center, radius +1, new Scalar (255), lineWide);
 			
-			Mat matRegions = Mat.zeros(matSampledPoints.size(), CvType.CV_8SC3);
-			drawRegions(matRegions, center, radius, sampledPoints);
+			Mat matRegions = Mat.zeros(matSampledPoints.size(), CvType.CV_8UC3);
+			drawRegions(matRegions, center, radiusAsArray[0], sampledPoints);
 			
 			result.matImages.add(matSrc);
 //			images.images.add(matGray);					not displayed
@@ -263,60 +262,21 @@ public class Cpdh {
 			}
 			sampledPoints[i] = allPoints.get(index);
 		}
-		
 		if ( allPoints.size() < numOfPoints ) {
 			System.out.println("Too few points in image, some points sampled multiple times");
 		}
-		
 		return sampledPoints;
 	}
 
-	private void drawPoints(Mat matDestination, Point[] points, int pixels) {
-		
-		if (pixels == 1) {
-			
-			for (Point point : points) {
-				matDestination.put( (int) point.y, (int) point.x, 255);
-			}
-		}
-		else if (pixels == 4) {
-	
-			Point rectPoint1 = new Point();
-			Point rectPoint2 = new Point();
-			for (Point point : points) {
-				rectPoint1.x = point.x + 1;
-				rectPoint1.y = point.y + 1;
-				rectPoint2.x = point.x;
-				rectPoint2.y = point.y;
-				Imgproc.rectangle(matDestination, rectPoint1, rectPoint2, new Scalar (255, 255, 255), Imgproc.FILLED);
-			}
-		}
-		else if (pixels == 9) {
-	
-			Point rectPoint1 = new Point();
-			Point rectPoint2 = new Point();
-			for (Point point : points) {
-				rectPoint1.x = point.x + 1;
-				rectPoint1.y = point.y + 1;
-				rectPoint2.x = point.x - 1;
-				rectPoint2.y = point.y - 1;
-				Imgproc.rectangle(matDestination, rectPoint1, rectPoint2, new Scalar (120, 80, 100), Imgproc.FILLED);
-			}
-		}
-		else 
-			throw new IllegalArgumentException("only suported values for point sizes are 1, 4 and 9 px");
-	}
-
-	private void drawRegions(Mat dest, Point center, double radius, Point [] points) {
+	private void drawRegions(Mat dest, Point center, float radius, Point [] points) {
 		
 		/* draw circles */
-		
-		Imgproc.circle(dest, center, (int) Math.round(Math.ceil(radius)), new Scalar(55, 55, 55));
-		Imgproc.circle(dest, center, (int) Math.round(Math.ceil(radius / 3.0)), new Scalar(55, 55, 55));
-		Imgproc.circle(dest, center, (int) Math.round(Math.ceil(( (radius / 3) * 2) )), new Scalar(55, 55, 55));
+		int lineWide = (dest.rows() >= 2048)? 2: 1;
+		Imgproc.circle(dest, center, (int) Math.round(Math.ceil(radius)) +1, new Scalar(55, 55, 55), lineWide);
+		Imgproc.circle(dest, center, (int) Math.round(Math.ceil(radius / 3.0)) +1, new Scalar(55, 55, 55), lineWide);
+		Imgproc.circle(dest, center, (int) Math.round(Math.ceil(( (radius / 3) * 2)) ) +1, new Scalar(55, 55, 55), lineWide);
 	
 		/* get end points of lines */
-		
 		float [] data = {0, 30, 60, 90, 120, 150, 180, 210, 240, 240, 270, 300, 330};
 		Mat angle = new Mat(1, data.length, CvType.CV_32FC1);
 		angle.put(0, 0, data);
@@ -333,17 +293,55 @@ public class Cpdh {
 		matPointY.get(0, 0, pointY);
 		
 		/* draw lines */
-		
 		for (int i = 0; i < pointX.length; i++) {
 			
 			Point pointXY = new Point(pointX[i] + center.x, pointY[i] + center.y);
-			Imgproc.line(dest, center, pointXY, new Scalar(55, 55, 55));
+			Imgproc.line(dest, center, pointXY, new Scalar(90, 90, 90));
 			/*Imgproc.line(dest, center, pointXY, new Scalar(15, 15, 210)); */
 		}
 		
 		/* draw points */
+		drawPoints(dest, points);
+	}
+
+	private void drawPoints(Mat matDestination, Point[] points) {
 		
-		drawPoints(dest, points, 4);
+		Point rectPoint1 = new Point();
+		Point rectPoint2 = new Point();
+		int rows = matDestination.rows();
+		
+		if (rows >= 2048) {
+			for (Point point : points) {
+				rectPoint1.x = point.x + 4;
+				rectPoint1.y = point.y + 4;
+				rectPoint2.x = point.x - 4;
+				rectPoint2.y = point.y - 4;
+				Imgproc.rectangle(matDestination, rectPoint1, rectPoint2, new Scalar (255, 255, 255), Imgproc.FILLED);
+			}
+		}
+		else if (rows >= 1024) {
+			for (Point point : points) {
+				rectPoint1.x = point.x + 1;
+				rectPoint1.y = point.y + 1;
+				rectPoint2.x = point.x - 1;
+				rectPoint2.y = point.y - 1;
+				Imgproc.rectangle(matDestination, rectPoint1, rectPoint2, new Scalar (255, 255, 255), Imgproc.FILLED);
+			}
+		}
+		else if (rows >= 512) {	
+			for (Point point : points) {
+				rectPoint1.x = point.x + 1;
+				rectPoint1.y = point.y + 1;
+				rectPoint2.x = point.x;
+				rectPoint2.y = point.y;
+				Imgproc.rectangle(matDestination, rectPoint1, rectPoint2, new Scalar (255, 255, 255), Imgproc.FILLED);
+			}
+		}
+		else {
+			for (Point point : points) {
+				Imgproc.rectangle(matDestination, point, point, new Scalar (255, 255, 255), Imgproc.FILLED);
+			}
+		}
 	}
 
 	/**

@@ -18,6 +18,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -267,21 +268,40 @@ public class CpdhController {
 	}
 	
 	@FXML
+	private void handleItemHelp() {
+		Alert help = new Alert(AlertType.INFORMATION);
+		help.setTitle("Cpdh App help");
+		help.setHeaderText("Cpdh App help");
+		help.setContentText("Data set can be created from the content of a folder."
+				+ "\nPictures in the selected folder will be organized into groups inferred from the picture's file name."
+				+ "\nFile name should begin with a name of a group and followed by a dash \"-\" and the rest of the file name."
+				+ "\nFor example \"butterfly-01\" and \"butterfly-small\" will be part of the same group,"
+				+ "\nbut \"other-butterfly\" will not be placed in that group."
+				+ "\nAfter adding or removing pictures from the folder, data set needs to be rebuilt for changes to be take effect."
+				+ "\n\nSupported file extensions are: .jpg, .jpeg and .bmp .");
+		help.setOnShown(e -> {
+			help.getDialogPane().setMinWidth(800);
+			help.setResizable(false);
+			});	
+		help.showAndWait();
+	}
+	
+	@FXML
 	private void handleItemAbout() {
 		
 		Alert info = new Alert(Alert.AlertType.INFORMATION);
-		info.setTitle("About");
-		info.setHeaderText("Cpdh App");
+		info.setTitle("Cpdh App About");
+		info.setHeaderText("Cpdh App\n"
+				+ "ver. preview 1");
 		StringBuilder contentBuilder = new StringBuilder("This app constructs CPDH descriptor and shows steps taken during construction.")
 				.append("\nThis CPDH descriptor than can be run through a data set to find the most similar match.")
 				.append("\nMPEG-7 shape data set is provided as default and custom data sets can be easily build.")
-				.append("\nSupported file extensions are: .jpg, .jpeg and .bmp .")
 				.append("\n\nTo learn more about CPDH descriptor, please visit:");
 		Label about = new Label(contentBuilder.toString());
 		Hyperlink link = new Hyperlink("https://www.researchgate.net/publication/220611301"
 				+ "_A_novel_contour_descriptor_for_2D_shape_matching_and_its_application_to_image_retrieval");
 		link.setOnAction(e -> hostServices.showDocument( link.getText()) );
-		Label author = new Label("\n\n Author:\t\t Aleksandar Ujfaluši\n\t\t\tAlexUjfa@outlook.com");
+		Label author = new Label("\n\n Author:\t\t Aleksandar Ujfaluši\n\t\t\t AlexUjfa@outlook.com");
 		VBox contentBox = new VBox(about, link, author);
 		info.getDialogPane().setContent(contentBox);
 		info.setOnShown(e -> {
