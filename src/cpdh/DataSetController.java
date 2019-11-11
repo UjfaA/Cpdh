@@ -49,6 +49,7 @@ public class DataSetController {
 		
 		progressBar.setVisible(false);
 		progressBar.setManaged(false);
+		directoryChooser.setInitialDirectory(new File("."));
 		
 		try {
 			currentDataSetDirectory = defaultDataSetDirectory = getDefaultDataSetLocation();
@@ -79,15 +80,15 @@ public class DataSetController {
 		}
 		else {
 			infoLabel.setText("No data found for selected folder!");
-			infoLabel2.setText("To construct data set from the content of selected folder, press Construct data button.");				
+			infoLabel2.setText("To construct data set from the content of selected folder, press Build data set button.");				
 		}
 		
 		if (dataSetsAreDefault) {
 			hyperlinkMakeDefault.setVisible(false);
 		}
-		else {
-			hyperlinkMakeDefault.setVisible(true);
+		else if (dataSetsAreLoaded){
 			hyperlinkMakeDefault.setVisited(false);	
+			hyperlinkMakeDefault.setVisible(true);
 		}
 	}
 
@@ -128,6 +129,8 @@ public class DataSetController {
 		if (dir == null)
 			return;
 		textfield.setText(dir.getAbsolutePath());
+		currentDataSetDirectory = dir;
+		directoryChooser.setInitialDirectory(dir.getParentFile());
 		try {
 			loadDataSets(dir);
 		} catch (IOException e) {
@@ -140,8 +143,6 @@ public class DataSetController {
 		dataSetsAreLoaded = true;
 		infoLabel.setText("Data set: \"" + dir.getName() + "\" is successfully loaded.");
 		infoLabel2.setText("");
-		currentDataSetDirectory = dir;
-		directoryChooser.setInitialDirectory(dir.getParentFile());
 		if (dir.equals(defaultDataSetDirectory.getAbsoluteFile())) {
 			dataSetsAreDefault = true;
 			hyperlinkMakeDefault.setVisible(false);

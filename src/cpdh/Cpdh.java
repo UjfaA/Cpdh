@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -531,22 +530,20 @@ public class Cpdh {
 
 	public String toString() {
 		
-		StringBuilder sb = new StringBuilder("[");
+		StringBuilder sb = new StringBuilder();
 		int col = 0;
 		for (int i = 0; i < histogram.length; i++ ) {
 			
 			sb.append(String.format(" %2d", histogram[i]));
 			if (col >= 11) {
-				sb.append(";\n ");
+				sb.append(";\n");
 				col = 0;
 				continue;
 			}
 			sb.append(", ");
 			col++;
 		}
-		sb.setLength(sb.length() - 3);
-		sb.append(" ]");
-		
+		sb.setLength(sb.length() - 1);
 		return sb.toString();
 	}
 	

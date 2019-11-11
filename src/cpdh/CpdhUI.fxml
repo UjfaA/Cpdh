@@ -35,6 +35,7 @@
           </Menu>
             <Menu mnemonicParsing="false" text="Settings">
               <items>
+                  <MenuItem disable="true" mnemonicParsing="false" text="Number of points:" />
                   <RadioMenuItem fx:id="radMeni50" mnemonicParsing="false" text="50 Points">
                      <toggleGroup>
                         <ToggleGroup fx:id="menuToggleGroup" />

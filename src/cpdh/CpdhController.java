@@ -2,9 +2,10 @@ package cpdh;
 
 import java.io.File;
 import java.io.IOException;
-
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,11 +65,12 @@ public class CpdhController {
 	private HostServices hostServices;
 	
 	private final FileChooser fileChooser = new FileChooser();
-	private File lastOpenedImageFile;
+//	private File lastOpenedImageFile;
 	
 	private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-	private Cpdh cpdh;
+	private Map<Integer,Cpdh> cpdhs = new HashMap<>();
+	private Cpdh selectedCpdh;
 	private DataSetController dataSetController;
 	private Stage dataSetSettingsWindow;
 
@@ -140,11 +142,15 @@ public class CpdhController {
 		
 		menuToggleGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
 			textField.setText("");
-			textArea.setText("");  //it is rewritten in processFille()
 			label.setText("");
-			/* reconstruct cpdh with new number of points */
-			if (lastOpenedImageFile != null) {
-				processFile(lastOpenedImageFile);
+			selectedCpdh = cpdhs.get(newValue.getUserData());
+			if (selectedCpdh != null) {
+				textArea.setText("CPDH descriptor values:\n" + selectedCpdh.toString());
+				configRadBtn(selectedCpdh.getImages());
+			}
+			else {
+				textArea.setText("");
+				configRadBtn(List.of());
 			}
 		});
 		
@@ -189,26 +195,30 @@ public class CpdhController {
 		final File file = fileChooser.showOpenDialog(imageView.getScene().getWindow());
 		if (file != null) {
 			processFile(file);
+			textField.setText("");
+			textArea.setText("CPDH descriptor values:\n" + selectedCpdh.toString());
+			configRadBtn(selectedCpdh.getImages());
 			fileChooser.setInitialDirectory(file.getParentFile());
 		}
 	}
 	
 	private void processFile(File file) {
-
-		Integer numOfPoints = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
-		this.cpdh = new Cpdh(file, numOfPoints);
-		this.lastOpenedImageFile = file;
-		textArea.setText(cpdh.toString());
-		configRadBtn(cpdh.getImages());
+		
+		menuToggleGroup.getToggles().forEach( numberOfPointsSetting -> {
+			Integer numOfPoints = (Integer) numberOfPointsSetting.getUserData();
+			cpdhs.put(numOfPoints, new Cpdh(file, numOfPoints));
+		});
+		Integer selectedNumOfPoints = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
+		this.selectedCpdh = cpdhs.get(selectedNumOfPoints);
 	}
 	
 	@FXML
 	private void handleItemRetrieveShape() {
 		
 		CpdhDataSet dataSet = null;
-		if (cpdh != null) {
-			Integer numOfPoints = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
-			dataSet = dataSetController.getDataSet(numOfPoints);
+		if (selectedCpdh != null) {
+			Integer selectedNumOfPoints = (Integer) menuToggleGroup.getSelectedToggle().getUserData();
+			dataSet = dataSetController.getDataSet(selectedNumOfPoints);
 			if (dataSet == null || dataSet.isEmpty()) {
 				label.setText("Please construct or load CPDH data set first.");
 				return;
@@ -219,7 +229,7 @@ public class CpdhController {
 			progresBar.setManaged(true);
 			label.setText(" Searching ...");
 			
-			Task<String> matchCpdhToGroup = Tasks.newMatchCpdhToGroupTask(cpdh, dataSet);
+			Task<String> matchCpdhToGroup = Tasks.newMatchCpdhToGroupTask(selectedCpdh, dataSet);
 			matchCpdhToGroup.setOnSucceeded(event -> {
 				try {
 					textField.setText("Best Match: " + matchCpdhToGroup.get());
@@ -272,12 +282,16 @@ public class CpdhController {
 		Alert help = new Alert(AlertType.INFORMATION);
 		help.setTitle("Cpdh App help");
 		help.setHeaderText("Cpdh App help");
-		help.setContentText("Data set can be created from the content of a folder."
-				+ "\nPictures in the selected folder will be organized into groups inferred from the picture's file name."
-				+ "\nFile name should begin with a name of a group and followed by a dash \"-\" and the rest of the file name."
-				+ "\nFor example \"butterfly-01\" and \"butterfly-small\" will be part of the same group,"
+		help.setContentText("For best result it is recommended to use images that contain only a single object (single contour)"
+				+ "\nand that object is clearly distinguishable from the background."
+				+ "\n\nA data set can easily be created from the content of a folder."
+				+ "\nTo construct custom data set simply put pictures in a folder and select that folder as data set in Data set settings section."
+				+ "\nAfter that simply click build data set button."
+				+ "\nFile names of pictures are important as groups of shapes are inferred from the pictures' file name."
+				+ "\nFile name should begin with a name of a shape, followed by a dash \"-\" and the rest of the file name."
+				+ "\nFor example \"butterfly-01\" and \"butterfly-small\" will be part of the same group of shapes,"
 				+ "\nbut \"other-butterfly\" will not be placed in that group."
-				+ "\nAfter adding or removing pictures from the folder, data set needs to be rebuilt for changes to be take effect."
+				+ "\nAfter adding or removing pictures from the folder, data set needs to be rebuilt for changes to take effect."
 				+ "\n\nSupported file extensions are: .jpg, .jpeg and .bmp .");
 		help.setOnShown(e -> {
 			help.getDialogPane().setMinWidth(800);
@@ -292,10 +306,11 @@ public class CpdhController {
 		Alert info = new Alert(Alert.AlertType.INFORMATION);
 		info.setTitle("Cpdh App About");
 		info.setHeaderText("Cpdh App\n"
-				+ "ver. preview 1");
-		StringBuilder contentBuilder = new StringBuilder("This app constructs CPDH descriptor and shows steps taken during construction.")
-				.append("\nThis CPDH descriptor than can be run through a data set to find the most similar match.")
-				.append("\nMPEG-7 shape data set is provided as default and custom data sets can be easily build.")
+				+ "ver. 0.1.0-rc1");
+		StringBuilder contentBuilder = new StringBuilder("This app constructs CPDH descriptor and shows steps made during the construction.")
+				.append("\nThis CPDH descriptor then can be run through a data set to find the most similar match.")
+				.append("\nMPEG-7 shape dataset is provided as default, but for the best results, constructing custom data set is recommended.")
+				.append("\nMore information about how to create a data set can be found under Help.")
 				.append("\n\nTo learn more about CPDH descriptor, please visit:");
 		Label about = new Label(contentBuilder.toString());
 		Hyperlink link = new Hyperlink("https://www.researchgate.net/publication/220611301"

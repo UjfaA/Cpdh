@@ -89,7 +89,7 @@ public class Tasks {
 			protected String call() throws Exception {
 
 				GroupScore bestGroup = dataSet.matchCpdhToGroup(cpdh);
-				if (bestGroup.score - 0.00 < 0.0005)
+				if (bestGroup.score < 0.0005)
 					if (dataSet.containsCpdhInGroup(cpdh,bestGroup.groupName))
 						updateMessage("Note: This image is most likely part of the data set.");
 					else
