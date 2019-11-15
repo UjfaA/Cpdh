@@ -76,7 +76,7 @@ public class DataSetController {
 		
 		if (dataSetsAreLoaded) {
 			infoLabel.setText("Data set: \"" + currentDataSetDirectory.getName() + "\" is successfully loaded.");
-			infoLabel2.setText("");
+			infoLabel2.setText(dataSetInfo());
 		}
 		else {
 			infoLabel.setText("No data found for selected folder!");
@@ -142,7 +142,7 @@ public class DataSetController {
 		}
 		dataSetsAreLoaded = true;
 		infoLabel.setText("Data set: \"" + dir.getName() + "\" is successfully loaded.");
-		infoLabel2.setText("");
+		infoLabel2.setText(dataSetInfo());
 		if (dir.equals(defaultDataSetDirectory.getAbsoluteFile())) {
 			dataSetsAreDefault = true;
 			hyperlinkMakeDefault.setVisible(false);
@@ -194,7 +194,7 @@ public class DataSetController {
 			progressBar.progressProperty().unbind();
 			progressBar.setVisible(false);
 			progressBar.setManaged(false);
-			infoLabel2.setText("");
+			infoLabel2.setText(dataSetInfo());
 			infoLabel2.setVisible(true);
 			btnConstructDataSets.setDisable(false);
 		});
@@ -222,6 +222,15 @@ public class DataSetController {
 	
 	CpdhDataSet getDataSet(Integer key) {
 		return dataSets.get(key);
+	}
+	
+	private String dataSetInfo() {
+		
+		if (dataSets.isEmpty()) 
+			return "";
+		
+		return String.format("There are %d categories and total of %d shapes in the data set.",
+				dataSets.get(50).numOfCategories(), dataSets.get(50).numOfCpdhs() );
 	}
 	
 	@FXML

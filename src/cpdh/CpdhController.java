@@ -63,9 +63,8 @@ public class CpdhController {
 	private ProgressBar progresBar;
 
 	private HostServices hostServices;
-	
+
 	private final FileChooser fileChooser = new FileChooser();
-//	private File lastOpenedImageFile;
 	
 	private final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -170,6 +169,7 @@ public class CpdhController {
 			iniDir = new File(".");
 		fileChooser.setInitialDirectory(iniDir);
 		
+		label.setText("Load image that contains a single shape to see its CPDH.");
 		progresBar.setManaged(false);	
 		
 		// Automatic compare not implemented
@@ -283,14 +283,14 @@ public class CpdhController {
 		help.setTitle("Cpdh App help");
 		help.setHeaderText("Cpdh App help");
 		help.setContentText("For best result it is recommended to use images that contain only a single object (single contour)"
-				+ "\nand that object is clearly distinguishable from the background."
+				+ "\nand that the object is clearly distinguishable from a background."
 				+ "\n\nA data set can easily be created from the content of a folder."
 				+ "\nTo construct custom data set simply put pictures in a folder and select that folder as data set in Data set settings section."
 				+ "\nAfter that simply click build data set button."
-				+ "\nFile names of pictures are important as groups of shapes are inferred from the pictures' file name."
+				+ "\nFile names of pictures are important as categories of shapes are inferred from the pictures' file name."
 				+ "\nFile name should begin with a name of a shape, followed by a dash \"-\" and the rest of the file name."
-				+ "\nFor example \"butterfly-01\" and \"butterfly-small\" will be part of the same group of shapes,"
-				+ "\nbut \"other-butterfly\" will not be placed in that group."
+				+ "\nFor example \"butterfly-01\" and \"butterfly-small\" will be part of the same category of shapes,"
+				+ "\nbut \"other-butterfly\" will not be placed in that category."
 				+ "\nAfter adding or removing pictures from the folder, data set needs to be rebuilt for changes to take effect."
 				+ "\n\nSupported file extensions are: .jpg, .jpeg and .bmp .");
 		help.setOnShown(e -> {
@@ -306,7 +306,7 @@ public class CpdhController {
 		Alert info = new Alert(Alert.AlertType.INFORMATION);
 		info.setTitle("Cpdh App About");
 		info.setHeaderText("Cpdh App\n"
-				+ "ver. 0.1.0-rc1");
+				+ "ver. 0.1.0");
 		StringBuilder contentBuilder = new StringBuilder("This app constructs CPDH descriptor and shows steps made during the construction.")
 				.append("\nThis CPDH descriptor then can be run through a data set to find the most similar match.")
 				.append("\nMPEG-7 shape dataset is provided as default, but for the best results, constructing custom data set is recommended.")

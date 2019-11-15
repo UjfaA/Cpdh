@@ -33,4 +33,8 @@ public interface CpdhDataSet {
 	boolean isEmpty();
 
 	boolean containsCpdhInGroup(Cpdh cpdh, String groupName);
+
+	int numOfCategories();
+
+	int numOfCpdhs();
 }

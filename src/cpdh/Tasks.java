@@ -32,7 +32,7 @@ public class Tasks {
 				
 				updateMessage("Getting files");
 				File[] files = dir.listFiles((directory, name) -> {
-					return name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".bmp");
+					return name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".bmp");
 				});
 				if (files.length == 0) {
 					updateMessage("Canceled. No picture files with supported extensions found.");

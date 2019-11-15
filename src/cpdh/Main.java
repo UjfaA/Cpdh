@@ -21,10 +21,10 @@ public class Main extends Application {
 			BorderPane root = (BorderPane) loader.load();
 			controler = (CpdhController) loader.getController();
 			controler.setHostServices(getHostServices());
-			Scene scene = new Scene(root,950,680);
+			Scene scene = new Scene(root,925,720);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
-			primaryStage.setMinWidth(965);
+			primaryStage.setMinWidth(925);
 			primaryStage.setMinHeight(720);
 			primaryStage.setTitle("CPDH App");
 			primaryStage.show();

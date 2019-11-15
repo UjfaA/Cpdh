@@ -13,6 +13,4 @@ https://www.researchgate.net/publication/220611301_A_novel_contour_descriptor_fo
 
 Writen in Java 12 with openCV 4 and JavaFX 12
 
-Currently it is possible to download compiled version 0.1.0-rc1 for Windows from this link:
-https://1drv.ms/u/s!ArqGpSFpdmx4m1Gv2nHY_Av-4-Rm?e=zF2RRm
 Simply download .zip archive, unzip and double click RunCpdhApp.bat

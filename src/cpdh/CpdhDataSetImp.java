@@ -146,5 +146,18 @@ public class CpdhDataSetImp implements CpdhDataSet {
 	public boolean isEmpty() {
 		return groups.isEmpty();
 	}
+
+	@Override
+	public int numOfCategories() {
+		return groups.size();
+	}
+
+	@Override
+	public int numOfCpdhs() {
+		int num = 0;
+		for (var group : groups.values())
+			num += group.size();
+		return num;
+	}
 	
 }

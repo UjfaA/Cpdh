@@ -22,7 +22,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="borderPane" focusTraversable="true" maxHeight="680.0" maxWidth="950.0" minHeight="680.0" minWidth="950.0" prefHeight="680.0" prefWidth="950.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cpdh.CpdhController">
+<BorderPane fx:id="borderPane" focusTraversable="true" maxHeight="680.0" maxWidth="1000.0" minHeight="680.0" minWidth="920.0" prefHeight="680.0" prefWidth="920.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cpdh.CpdhController">
    <top>
       <MenuBar BorderPane.alignment="TOP_LEFT">
         <menus>
@@ -99,7 +99,7 @@
                <children>
                   <VBox alignment="BOTTOM_CENTER" maxWidth="637.0" prefHeight="90.0">
                      <children>
-                        <TextArea fx:id="textArea" editable="false" focusTraversable="false" minHeight="80.0" minWidth="535.0" prefRowCount="3" promptText="CPDH for loaded image will be shown here.">
+                        <TextArea fx:id="textArea" editable="false" focusTraversable="false" minHeight="80.0" minWidth="525.0" prefRowCount="3" promptText="CPDH for loaded image will be shown here.">
                            <VBox.margin>
                               <Insets bottom="5.0" left="7.0" right="7.0" top="5.0" />
                            </VBox.margin>
